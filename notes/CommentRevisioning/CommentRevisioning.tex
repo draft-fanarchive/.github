@@ -1,0 +1,56 @@
+% Typed in TeX because that's what I like, if this ever turns serious and other people contribute these really \textbf{should} be formatted in markdown.
+\documentclass{amsart}
+\usepackage{verbatim}
+\newtheorem*{prob}{Problem}
+\newtheorem{oq}{Open Question}
+\newtheorem{sol}{Candidate Solution}
+\theoremstyle{remark}
+\newtheorem{eg}{Example}
+\begin{document}
+    \section{Problem Statement}
+    \begin{prob}
+        Review comments on a draft are not themselves version-controlled; the draft is, via some discrete-snapshot version control system (git, in practice). A comment is a pointer -- (snapshot, span of text in that snapshot) -- authored against one snapshot of the draft. As the draft moves forward, decide, for each comment, whether it is still live against the span it was meant for, has merely drifted (moved, reworded, rewrapped) and should be re-anchored, or is stale/orphaned and should be flagged dead.
+    \end{prob}
+
+    \section{Prior Literature}
+    Grouped by where the idea comes from rather than chronologically.
+    \begin{itemize}
+        \item \textbf{Robust locations.} Phelps \& Wilensky, ``Robust Hyperlinks and Locations'' (D-Lib Magazine, 2000). Origin of the core trick everything below inherits: address a span by position \emph{and} a small content signature (surrounding text), so a failed position lookup falls back to a content search.
+        \item \textbf{W3C Web Annotation Data Model} (2017 Recommendation). Standardizes the signature as composable Selectors: \texttt{TextPositionSelector} (raw offsets -- fast, brittle) and \texttt{TextQuoteSelector} (exact quote plus prefix/suffix context -- survives offset drift, disambiguated by the context). Defines the schema, not a staleness policy.
+        \item \textbf{Hypothes.is fuzzy anchoring.} A shipped implementation of the above: try the position, verify by quote, else fall back to a fuzzy full-document search seeded near the old position. Below a similarity threshold the match is rejected outright -- the comment goes \emph{orphaned}, a third state distinct from plain live/stale. Most directly reusable prior art for our case. (The current \texttt{hypothesis/client} does this via its own \texttt{approx-string-match} package -- a bit-parallel Myers approximate matcher; the older Annotator/h-client generation used a modified \texttt{diff-match-patch} Bitap matcher instead.)
+        \item \textbf{Scroll-To-Text-Fragment} (WICG browser spec). Same quote-plus-context shape, but hard-fails with no fuzzy fallback at all -- the brittle end of the spectrum, useful as a design pole to contrast against.
+        \item \textbf{Code review tools.} GitHub PR comments store (original commit, diff-hunk-relative position, hunk text); position is recomputed against the current diff on every render, and \texttt{null} means outdated. Gerrit's \texttt{CommentPorter} remaps comment ranges patchset-to-patchset via JGit's diff (Myers/histogram). Both are single-hop ($N \to N+1$) and diff-hunk-relative rather than whole-file; the closest sibling to our setup, since comments anchor to discrete snapshots rather than a continuously-live document.
+        \item \textbf{Git's own move detection.} \texttt{git diff -M/-C} and \texttt{--color-moved} already do block-similarity move/copy detection inside git's diff engine. Solves ``paragraph relocated verbatim'' for free; does not catch rewording.
+        \item \textbf{CRDT anchor semantics.} Peritext (Litt, Lim, Kleppmann, van Hardenberg; PACM HCI CSCW2, 2022): every character carries stable before/after anchor points, and spans -- including comments -- attach to those anchors, invalidated only when the literal character is deleted. The principled ceiling our diff-based heuristics are approximating; unavailable to us as-is, since a plain git-tracked text file carries no persistent per-character identity.
+        \item \textbf{Near-duplicate / paraphrase detection.} Diff and edit-distance measure literal similarity and miss a well-reworded sentence entirely. $w$-shingling with Jaccard similarity (Broder, 1997) and SimHash (Charikar, 2002) are the standard toolkit for ``same content, different tokens''; sentence-embedding cosine similarity goes further still. The only branch of the literature that actually addresses ``keep it live even as the phrasing shifts.''
+        \item \textbf{Word/sentence-level diff for prose specifically.} \texttt{latexdiff} tokenizes at the word level and is largely insensitive to how the source happens to be line-wrapped -- directly on point given we're diffing \texttt{.tex} sources ourselves. Translation-memory tooling (SRX segmentation rules, TMX) solves an industrial-scale version of the same problem: segment running prose into stable comparable units independent of line breaks, then diff/fuzzy-match at that granularity.
+    \end{itemize}
+
+    \section{Open Design Questions}
+    \begin{oq}[Is line-based git diff even the right substrate for prose?]
+        For code, a line is a meaningful unit (roughly one statement), so git's line-based diff, hunk boundaries, and move detection all track semantic structure. For prose the line is an artifact of wrapping convention: a paragraph typed as one long line makes any single-word edit look like a full-paragraph change, which destroys hunk-overlap and move-detection alike; a paragraph hard-wrapped at a column width reflows visually on almost any edit, which git handles fine as bytes but is exactly the kind of line-level noise that swamps line-based diffing. Two ways out, not obviously reconcilable: (a) mandate a house line-breaking convention (e.g. one sentence or clause per line -- ``semantic linefeeds'') so git's line diff becomes a meaningful prose diff; or (b) stop relying on git's line diff for anchoring at all and re-diff at word or sentence granularity ourselves regardless of how the file happens to be wrapped, the way \texttt{latexdiff} and TM segmentation do. (b) is more robust but means git is providing us version storage only, not the comparison primitive -- worth being explicit that we've made that call rather than backing into it.
+    \end{oq}
+
+    \begin{oq}[Content drift vs.\ presentation drift -- are these even the same problem?]
+        A comment is authored against the site's HTML rendering of a commit, not against the commit's raw text directly. So any (commit, span) anchor as posited in the Problem Statement has to be reverse-engineered from a reader's on-page selection, through whatever the rendering pipeline is (templating, markdown/prose-to-HTML conversion, syntax highlighting, included partials), back into source coordinates -- itself a nontrivial, pipeline-specific step, separate from anchoring proper.
+
+        More importantly, this is a second, independent axis of drift. The presentation layer can change while the underlying commit does not: template redesign, renderer upgrade, CSS/typography changes that alter wrapping, restructured headings or pagination, boilerplate added or removed around the content. A comment can go stale purely from a re-render, with no corresponding git diff at all -- and since the renderer/theme typically lives outside the draft's own repository (or is a hosted platform's unilateral decision), a staleness check that only watches the draft's git log will silently miss this entire class of drift.
+    \end{oq}
+
+    \section{Candidate Solutions}
+    \begin{sol}[Diff-synthesized history with stable ids, tombstones, and boundary rules]
+        Treat a minimum-edit-distance alignment between two snapshots as a stand-in for the missing operation log: matched spans carry their id forward unchanged, unmatched spans delete the old id and insert a fresh one. Borrow three specific primitives from Peritext rather than the CRDT itself: (1) every token gets a stable id at insertion, never reused; (2) a deleted id becomes a tombstone -- dead but still addressable -- rather than disappearing, which is the formal shape of the \emph{orphaned} state; (3) a comment's anchor that lands on a tombstone resolves via Peritext's before/after rule rather than a bespoke similarity threshold.
+
+        Two open caveats, independent of the anchor scheme itself. Minimum-edit alignment is not generically unique: repeated/duplicated spans admit multiple equally-parsimonious alignments, so the answer depends on the diff algorithm's tie-breaking, not on the document. And parsimony (no gratuitous delete-and-retype of identical content) is a modeling prior, not a recovered fact.
+
+        Unresolved: the alignment is computed on source snapshots, but a comment is authored against the \emph{rendered} presentation of a snapshot (cf.\ the content/presentation drift question above) -- whether source-identity implies presentation-identity depends on whether the render transform can merge, reorder, or duplicate spans (e.g.\ transclusion).
+    \end{sol}
+
+    \section{Reading List}
+    \begin{itemize}
+        \item \textbf{Peritext paper.} Litt, Lim, Kleppmann, van Hardenberg, ``Peritext: A CRDT for Collaborative Rich Text Editing,'' \emph{Proc.\ ACM Hum.-Comput.\ Interact.} 6, CSCW2 (2022). \texttt{https://doi.org/10.1145/3555644}. Practitioner-oriented walkthrough of the same material: \texttt{https://www.inkandswitch.com/peritext/}.
+        \item \textbf{Peritext reference implementation.} \texttt{https://github.com/inkandswitch/peritext} -- TypeScript prototype extending Micromerge (a simplified Automerge); includes generative/property-based convergence tests. A research artifact, not a maintained library.
+        \item \textbf{Automerge.} \texttt{https://automerge.org/docs/reference/documents/} -- the maintained CRDT library that has since folded Peritext-derived mark/rich-text semantics into its core \texttt{Text} type; the realistic implementation target if the Candidate Solution above is ever actually built, rather than the reference repo itself.
+    \end{itemize}
+
+\end{document}

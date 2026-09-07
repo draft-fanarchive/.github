@@ -1,0 +1,131 @@
+% Typed in TeX because that's what I like, if this ever turns serious and other people contribute these really \textbf{should} be formatted in markdown.
+% Supporting investigation for TagMotifIndex.tex. Not the clean write-up; this is the scratch work
+% establishing whether the "symmetry only grows downward" rule is safe to adopt.
+\documentclass{amsart}
+\usepackage{verbatim}
+% N.B. no \usepackage{listings} here, unlike WorksInCollection.tex -- nothing in this
+% file needs it and listings.sty is not present in the local TinyTeX install.
+\newtheorem*{prob}{Problem}
+\newtheorem{tc}{Case}
+\theoremstyle{remark}
+\newtheorem{eg}{Example}
+\newtheorem*{verdict}{Verdict}
+\begin{document}
+    \title{Symmetry and Subsumption}
+    \section{The Question}
+    \begin{prob}
+        Predicates in the meaning index carry a symmetry group on their argument positions: $P\langle\{e\}\rangle$ for the totally directed case, $P\langle S_n\rangle$ for the totally symmetric one. Can we impose the well-formedness rule
+        \[
+            P \sqsubseteq Q \implies G_Q \leq G_P
+        \]
+        (``sub-tropes have broader symmetry groups than their parents'') and design the forest to comply?
+    \end{prob}
+    The rule is attractive. It would make the closure count a plain subgroup index $[G_P : G_Q]$ rather than $[G_P : G_P \cap G_Q]$, and it offers a tidy story: descending the tree means participants become more interchangeable.
+
+    \begin{verdict}
+        No. The rule is not merely unsatisfiable in awkward corner cases -- it is backwards relative to the grain of the domain, it contradicts the map-to-nearest tagging discipline directly, and the group-index formula it was meant to simplify is itself wrong for reasons that have nothing to do with symmetry. All three are established below.
+    \end{verdict}
+
+    \section{Why the Rule Runs Against the Grain}
+    Specialization in a narrative index happens in two ways.
+    \begin{itemize}
+        \item \emph{Mutualization}: the child asserts the converse as well. This \textbf{grows} the group. $\mathrm{MutualPining}\langle S_2\rangle \sqsubseteq \mathrm{PinesFor}\langle\{e\}\rangle$ is the case that motivated the rule.
+        \item \emph{Role assignment}: the child distinguishes participants the parent treats alike. This \textbf{shrinks} the group.
+    \end{itemize}
+    Narrative detail is overwhelmingly about who does what to whom, and agency is directional. Role assignment is therefore the \emph{dominant} mode of refinement here, and mutualization the special case. The rule generalizes from the rarer pattern.
+
+    \subsection{The direct contradiction with map-to-nearest}
+    This is the most serious objection, and it is internal rather than aesthetic. The tagging discipline requires that when a tagger's desired precision does not exist, a coarser node does. But coarse nodes are coarse \emph{precisely because they have not yet assigned roles}, which is to say they are symmetric; and their refinements add roles, which is to say they are less symmetric. The rule therefore forbids exactly the parent/child pairs that the fallback discipline depends on. Adopting it would mean deleting the nodes that make gating survivable.
+
+    \section{Torture Cases}
+    Each case below is a genuine non-defeasible entailment between two nodes that are \emph{independently} units of demand, where the child's group is strictly smaller than the parent's.
+
+    \begin{tc}[Siblings]
+        \[
+            \mathrm{ProtectiveOlderSibling}\langle\{e\}\rangle(A,B) \sqsubseteq \mathrm{SiblingRelationship}\langle S_2\rangle(A,B)
+        \]
+        The entailment is unimpeachable: if $A$ is $B$'s protective older sibling then $A$ and $B$ are siblings. Both nodes are heavily trafficked in practice. Critically, the symmetric parent cannot be dropped -- twins have no older sibling, adopted siblings frequently have no established birth order, and a great many works never settle the question. Under map-to-nearest those taggers have nowhere else to land.
+    \end{tc}
+
+    \begin{tc}[Kinship generally]
+        \[
+            \mathrm{ParentChild}\langle\{e\}\rangle(A,B) \sqsubseteq \mathrm{FamilyRelationship}\langle S_2\rangle(A,B)
+        \]
+        The same shape, with an entailment nobody will dispute. Kinship is the richest vein for this problem because kinship vocabulary is inherently role-laden while the coarse relation ``these two are family'' is not.
+    \end{tc}
+
+    \begin{tc}[Non-romantic, plot device]
+        \[
+            \mathrm{WinsDuel}\langle\{e\}\rangle(A,B) \sqsubseteq \mathrm{Duel}\langle S_2\rangle(A,B)
+        \]
+        A duel involves both parties symmetrically; who wins does not. This case matters because it shows the problem is not an artifact of romance tropes, where mutualization is unusually common.
+    \end{tc}
+
+    \begin{tc}[Work relations -- see \texttt{WorksInCollection.tex}]
+        \[
+            \mathrm{TranslationOf}\langle\{e\}\rangle(W,W') \sqsubseteq \mathrm{RelatedWorks}\langle S_2\rangle(W,W')
+        \]
+        and likewise for remix, podfic, and sequel.
+
+        Every interesting inter-work relation is directional; the coarse relation ``these two works are related'' is symmetric. Note that the Archive ships the symmetric parent as an actual product feature, which is decent evidence that it is a real unit of demand and not a scaffolding node invented to make a hierarchy tidy.
+    \end{tc}
+
+    \begin{tc}[Agency under a symmetric act]
+        \[
+            \mathrm{NonConsensualKiss}\langle\{e\}\rangle(A,B) \sqsubseteq \mathrm{Kissing}\langle S_2\rangle(A,B)
+        \]
+        The act is symmetric; the consent structure is not. This generalizes: any symmetric interaction acquires asymmetric children as soon as the index says something about who initiated, who consented, or who benefited.
+    \end{tc}
+
+    \section{The Killer: Non-Monotone Within One Lineage}
+    The cases above rule out ``symmetry only grows downward.'' A single lineage rules out any rule in \emph{either} direction:
+    \[
+        \mathrm{PinesFor}\langle\{e\}\rangle \;\sqsupseteq\; \mathrm{MutualPining}\langle S_2\rangle \;\sqsupseteq\; \mathrm{MutualPiningAConfessesFirst}\langle\{e\}\rangle
+    \]
+    with groups $\{e\} \to S_2 \to \{e\}$ descending.
+
+    The bottom node is the most constructed example in this document and I will own that. But the \emph{shape} is not constructed, and that is what matters: mutualization erases direction, and there is always more direction available to add back underneath it -- who acted first, who realized first, who confessed, who was oblivious. Any mutualized node can therefore acquire a directional child. Since mutualization is the only construction that grows the group, every group-growing step in the forest is a candidate site for a group-shrinking step immediately beneath it.
+
+    \section{Escape Hatches, and Why Each Fails}
+    \begin{enumerate}
+        \item \emph{Drop the symmetric parent.} Then ``any sibling fic'' becomes a disjunction the query layer synthesizes, and -- fatally -- the twins case has no node to attach to. Kills map-to-nearest.
+        \item \emph{Keep both nodes, sever the $\sqsubseteq$ edge.} Querying the parent then misses every work tagged with the child. This is precisely the recall failure the hierarchy exists to prevent, and it is the Archive's metatag problem reproduced deliberately.
+        \item \emph{Reify the role as a separate tag}, so ``protective older sibling'' is a conjunction of $\mathrm{SiblingRelationship}\langle S_2\rangle$ with $\mathrm{Older}\langle\{e\}\rangle$ and $\mathrm{Protective}\langle\{e\}\rangle$ rather than a node. This is the only escape with real merit, and it fails on a principle already adopted: canonicalize units of demand, not units of semantic irreducibility. ``Protective Older Sibling'' is exactly such a unit. It also forces taggers to assemble compound terms -- the thing rejected when it came up for $\mathrm{UnknownMutualPining}$.
+        \item \emph{Invert the edge}, putting the symmetric node beneath the directed one. Semantically false: it would assert that every sibling relationship has a determinate older sibling, and it reverses the direction of query inclusion.
+    \end{enumerate}
+
+    \section{The Deeper Problem: The Formula Was Wrong Anyway}
+    The rule was proposed to simplify $[G_P : G_P \cap G_Q]$. That expression is not merely inelegant -- it is incorrect, for reasons independent of everything above.
+
+    \begin{eg}[Numerically wrong]
+        $\mathrm{MutualPiningAConfessesFirst}\langle\{e\}\rangle(A,B)$ entails $\mathrm{PinesFor}(A,B)$ \emph{and} $\mathrm{PinesFor}(B,A)$ -- two rows. The formula gives $[\{e\} : \{e\}] = 1$.
+    \end{eg}
+    \begin{eg}[Inexpressible]
+        $\mathrm{PiningChain}\langle A_3\rangle(A,B,C) \sqsubseteq \mathrm{PinesFor}\langle\{e\}\rangle$, a subsumption that changes arity. The formula has no notion of projecting three arguments onto two and cannot state the conclusion at all, whatever number it produces.
+    \end{eg}
+
+    The error was assuming entailed instances are the orbit of the argument tuple under the child's own group. They are not. A subsumption edge carries an \emph{explicit argument mapping}, and a child may hold several edges to the same parent under different mappings. Writing $\varphi : \{1..n_Q\} \to \{1..n_P\}$ for which child slot fills each parent slot:
+    \[
+        P(a_1,\dots,a_{n_P}) \models Q(a_{\varphi(1)},\dots,a_{\varphi(n_Q)})
+    \]
+    with an edge set $\Phi_{P,Q}$ rather than a single edge. Then $\mathrm{MutualPining} \to \mathrm{PinesFor}$ has $\Phi = \{(1,2),(2,1)\}$; $\mathrm{OlderSibling} \to \mathrm{Siblings}$ has $\Phi = \{(1,2)\}$ with the output collapsing under the parent's $S_2$; and $\mathrm{PiningChain} \to \mathrm{PinesFor}$ has $\Phi = \{(1,2),(2,3),(3,1)\}$, arity change included at no extra cost. That the mutual case's two mappings happen to be related by the child's group is a coincidence of that case, and generalizing from it was the mistake.
+
+    \subsection{The replacement constraint}
+    Closure is then: canonicalize the child term under $G_P$, apply every $\varphi \in \Phi_{P,Q}$, deduplicate outputs under $G_Q$. For this to be well defined the answer must not depend on which orbit representative was chosen, which gives the real well-formedness condition:
+    \[
+        \varphi \in \Phi_{P,Q},\ \sigma \in G_P \implies \sigma \circ \varphi \in \Phi_{P,Q}
+    \]
+    -- each edge set is closed under the child's symmetry group. It is checkable at canonicalization time, it holds in all three examples above, and it constrains edges rather than group containment. That is the right shape: the object needing a constraint was never the relationship between $G_P$ and $G_Q$.
+
+    \section{Consequences}
+    \begin{itemize}
+        \item No monotonicity rule on symmetry is available in either direction. Drop it.
+        \item Symmetry annotations must name a specific subgroup of $S_n$, not an isomorphism type. $S_3$ contains three distinct copies of $S_2$, and ``contested beloved'' versus ``torn between two'' are different tropes sitting on different ones.
+        \item Subsumption edges are labeled with argument mappings and may change arity. The forest is a labeled graph, not a bare order on predicate names.
+        \item Materialize from the asserted node directly to each ancestor, never transitively, so path-independence holds by construction rather than resting on the tower law.
+    \end{itemize}
+
+    % Open question: with edges labeled by argument mappings, is the "index of one tree per sort" picture still right? PiningChain/3 -> PinesFor/2 crosses arity within one family; TranslationOf(Work,Work) vs ProtectiveOlderSibling(Char,Char) do not interact at all. Maybe sorts partition the forest and arity does not.
+    % Open question: does Phi ever need to be a multiset, or map one parent slot from two child slots? Nothing here demands it, but nothing rules it out either.
+    % Open question: cardinality constraints per slot (the "if A translates B, can C also translate B?" worry from WorksInCollection) presumably ride along in the same canonicalization-time declaration as arity, sorts, and symmetry. Worth confirming they compose.
+\end{document}

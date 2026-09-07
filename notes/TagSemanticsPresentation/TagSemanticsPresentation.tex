@@ -1,0 +1,29 @@
+% Typed in TeX because that's what I like, if this ever turns serious and other people contribute these really \textbf{should} be formatted in markdown.
+\documentclass{amsart}
+\usepackage{verbatim}
+\newtheorem*{feat}{Problem}
+\newtheorem*{feat}{Feature}
+\newtheorem{opt}{Option}
+\theoremstyle{remark}
+\newtheorem{eg}{Example}
+\begin{document}
+We want to allow greater nuance and flexibility by separating the literal tag text of a work from what it gets indexed under. We have several motivating use cases. 
+
+\begin{feat}Irony. The ability to write ``this goes great'' as literal tag text and tag it with the semantic meaning of ``complete dumpster fire.'' Simply using text strings and canonical forms can't achieve this. 
+\end{feat}
+
+\begin{feat}Tag essays. Part of our motivation is a tag culture like Tumblr's. Hence, long strings of tags with one collective meaning should be suported. ``#These are truly just #the biggest idiots'' (semantically tagged ``mutual obliviousness'') note that the break in the tag accommodates a cadence of speech and want a way to preserve it even if the indexed meaning spans across tags. 
+\end{feat}
+
+\begin{feat}Heavily indexed tags. A simple ship tag, say ``Goncharovera'' could be mapped to multiple relationship tropes about the (Goncharov/Vera) relationship.\end{feat}
+
+\begin{feat}Chatty tags: Tags where the presentation layer is all the matters and the author is just talking.\end{feat}
+
+\begin{feat}Silent tags: Tags where there is no presentation layer. A work contains and should be tagged with a trope for search discovery (or tagged with warnings for moderation), but the author did not think it was important enough to put in the immediate visible layer of tags with strings.\end{feat}
+
+\begin{feat}Modifiers: Again appealing to a shipping example, incidental Goncharovera should have a Goncharovera tag, mapped to the Goncharovera semantic node, but should also be marked in some way as not the focus of the work.\end{feat} 
+
+This invites the following design problems: 
+\begin{prob}Tag Priority. Some tags are more important to communicate than others, and this does not track with which are given text and which are silent. Users may -- adopting the ironic mode -- tag with text "Vera's fine" and mean "Major character death". Moderators may come to a work and add a semantic tag for "Extensive Blood/Violence" without disturbing the written tags. We need a way to warn the reader "This work contains major character death" without disturbing the text-semantic tag map the user created. Likewise, if the user added "Major character death" as a silent tag -- we need a way to communicate the fact despite the absence of text tag content to pair it with. \end{prob} 
+\begin{prob}Tag Multiplicity. We allow semantic tags to span multiple text tags. We allow text-tags to carry multiple semantic tags. How do we reconcile both of these in cases where a larger semantic tag spans multiple text tags, but those text tags have other meanings attached?\end{prob}
+\end{document}

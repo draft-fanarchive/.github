@@ -1,0 +1,41 @@
+% Typed in TeX because that's what I like, if this ever turns serious and other people contribute these really \textbf{should} be formatted in markdown.
+\documentclass{amsart}
+\usepackage{verbatim}
+\newtheorem*{prob}{Problem}
+\newtheorem{opt}{Option}
+\theoremstyle{remark}
+\newtheorem{eg}{Example}
+\begin{document}
+    \section{Problem Statement}
+    \begin{prob}
+        Define a tagging system that captures how people actually use language in tags -- freeform, colloquial, sometimes ironic -- while still supporting a coherent, layered index of what a tag actually signifies.
+    \end{prob}
+    The following examples illustrate the phenomena we want the system to handle.
+    \begin{eg}
+        A tag reads ``Fluff'' and signifies fluff. Literal text and signified meaning agree.
+    \end{eg}
+    \begin{eg}
+        A tag reads ``This goes great'' and signifies (things are a disaster). The literal text and the signified meaning are in tension; that tension is legible to a reader as irony, without needing to be separately labeled as such.
+    \end{eg}
+    \begin{eg}
+        The same literal text, ``Everybody lives,'' signifies survival-fluff on one work and, on another, is a bait-and-switch joke over a character-death fic. The same surface string resolves to different meanings depending on the work it's applied to.
+    \end{eg}
+    \begin{eg}
+        A tag is applied at a broad node of the meaning index (``Hurt/Comfort'') without committing to any of its narrower subdivisions, the way a Thompson Motif Index entry can be cited at an intermediate level of the hierarchy rather than always at a leaf.
+    \end{eg}
+    \section{Working Model}
+    Modeled on the Thompson Motif Index: a broad, coherent hierarchy of \emph{signified meanings}, organized by category and narrowing subdivision, where a tag may attach at any level, not only at leaves.
+    Applying a tag to a work is an act of indexing that work against this hierarchy, distinct from the freeform text used to express it. Concretely, a tag as applied to a work is a pair:
+    \begin{itemize}
+        \item literal text presented (freeform, uncontrolled, exactly as authored)
+        \item tagged meaning (a reference into the meaning index)
+    \end{itemize}
+    This pair is per-instance (scoped to a single tag applied to a single work), not a global mapping from a literal string to one canonical meaning -- see the ``Everybody lives'' example above. The author-tagger takes the first pass at assigning both halves of the pair.
+
+    \subsection{Two vocabularies, two openness policies}
+    Literal text and meaning-index nodes are open to new entries on different terms. Literal text is unconstrained at tagging time: an author may write any string, freely, the moment they tag a work. Meaning-index nodes are not -- a tagger must map to an existing node, even one coarser than what they'd ideally want. New nodes enter the index only through a separate, moderated proposal process: the index is open to proposed additions, but proposals are reviewed and accepted by moderation rather than minted ad hoc by whoever happens to be tagging a work.
+    Because of this asymmetry, the meaning half of a tag pair is not fixed for the pair's lifetime. It can be mutated -- most commonly, re-pointed at a newer, more specific node once one is added to the index. This lets tagging proceed at the best granularity available at the time without leaving it permanently stuck there as the index deepens.
+    % Open question: who may perform this remapping -- only the original tagging author, or can others (moderators, other users) update the meaning half once a finer node exists? This is effectively the "second pass" question above, just triggered by index growth rather than correction of a misjudgment.
+    % Open question: is mutation solely a response to newly available, more specific nodes, or also a general mechanism for correcting an author's initial misjudgment?
+    % Open question, really two axes bundled together. (a) Can new meaning-nodes be minted at time-of-tagging, without prior sanction -- the way AO3 lets any author type any Fandom/Character/Relationship/Freeform string on the spot -- or is node-creation gated, the way Thompson's categories are authored in advance by a scholarly authority? (b) Is the organizing hierarchy built ahead of the data, or assembled/refined reactively from whatever accumulates -- the way AO3's volunteer Tag Wranglers link synonym strings to a canonical tag and slot canonicals into a shallow parent/child structure after the fact, with much of the freeform tag space left unwrangled? Note AO3 itself splits by axis: Rating/Archive Warning/Category are closed fixed enums even there; only Fandom/Character/Relationship/Freeform are open in this way. These two axes can vary independently, and needn't have one uniform answer for the whole meaning index.
+\end{document}
