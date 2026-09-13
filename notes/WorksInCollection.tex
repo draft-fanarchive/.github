@@ -8,32 +8,280 @@
 \newtheorem{eg}{Example}
 \begin{document}
     \section{Problem Statement}
-    \begin{prob}
+    \begin{prob}[Relations]
         Define a coherent but flexible way to represent the relationships of works to one another.
     \end{prob}
-    The following examples represent some of the diversities of ways works might inter-relate
-    \begin{eg}
-        One work (a chapter) is contained within another (a novel)
+    However, there are many more possible relations, and we'd like a schema that allows easy expansion for frequently recurring relationships not on this list, perhaps even going so far as to allow authors to define their own relations between works; this flexibility would be very useful for fandoms. At the same time a too-rarified view of Works obscures the details and distinguishing marks of relations from clients' queries.
+
+    \begin{prob}[Default presentation]
+        Holding a user's search preferences constant, every work should have one intuitive \emph{record}: the entry under which an AppView presents it by default. A listing built from those records should show each work at most once, even when the work belongs to several sequences.
+    \end{prob}
+    AppViews are free to decide how they present queries like ``most recent works in fandom X'' or ``works tagged Y''. What we want from the data model is narrower: once a user's preferences are fixed, there should be a clear default for what gets listed. The main preference in play is granularity. A user might want results reported at
+    \begin{description}
+      \item[Top-most granularity] the largest grouping a work belongs to (``show me the Trojan Epic Cycle''),
+      \item[Work granularity] the usual per-work level (``show me the \textit{Iliad}''), or
+      \item[Atomic granularity] the smallest subdivision (``show me book VII of the \textit{Iliad}'').
+    \end{description}
+    Given any one of these, each work's default record should be predictable, and a work that sits in more than one sequence should not appear more than once.
+
+    The following examples serve both problems. They are stress-test cases: each one is a situation a schema should either represent or deliberately refuse. None of them is evaluated against the options below here. Questions bearing on the first problem are marked \emph{Questions:}, and questions bearing on the second are marked \emph{Listing:}.
+
+    \subsection*{Working vocabulary}
+    These definitions are provisional and exist only to sort the examples. Several examples are there specifically because they don't sort cleanly.
+    \begin{description}
+      \item[Containment] A work is a component of another work: the whole is, at least in part, made up of its parts (chapter/novel, story/anthology).
+      \item[Relation] Two (or more) works stand in some named connection (sequel, translation, remix), but neither is made up of the other.
+      \item[Reading sequence] An ordering of readable text that someone (author, editor, reader) proposes a reader follow.
+      \item[Granularity] A user's preference for the level at which listings report works: top-most, work, or atomic.
+      \item[Record] The single entry under which, at a given granularity, an AppView lists a work by default.
+    \end{description}
+    The rough idea in the last section treats reading sequences as entities separate from both containment and relation. So the examples below look especially for places where the three notions blur together, where a sequence has to point at something other than a whole text-bearing work, or where it's unclear who owns a sequence. The second problem adds pressure wherever a work has more than one candidate record, or wherever the ``work'' level of a hierarchy isn't obvious.
+
+    \subsection*{Containment}
+    \begin{eg}[Basic serial]\label{eg:chapter-novel}
+        One work (a chapter) is contained within another (a novel).
+        \emph{Listing:} Baseline: at atomic granularity the record is the chapter; at work and top-most granularity it is the novel. The other examples are compared against this.
     \end{eg}
-    \begin{eg}
-        One work (a one-shot) is contained within another (an anthology)
+    \begin{eg}[Basic anthology]\label{eg:oneshot-anthology}
+        One work (a one-shot) is contained within another (an anthology).
+        \emph{Listing:} At top-most granularity, is a one-shot that can be read on its own listed as the anthology? At work granularity, is it listed as itself?
     \end{eg}
-    \begin{eg}
-        One work (a chapter) is contained within another (a novel)
+    \begin{eg}[Deep nesting]\label{eg:epic}
+        One work (a chaptered story) is book three of a sprawling epic work.
+        \emph{Listing:} At work granularity, is the record the epic, book three, or something in between?
     \end{eg}
-    \begin{eg}
-        One work (a chaptered story) is a sequel to another (\textit{ibid.})
+    \begin{eg}[Uneven depth]\label{eg:uneven-depth}
+        A novel's chapters are mostly single texts, but chapter 7 is split into 7a and 7b, which were posted separately.
+        \emph{Questions:} Must siblings sit at the same depth? Is chapter 7 a grouped work, and does it have its own sequence?
+        \emph{Listing:} At atomic granularity, are 7a and 7b listed separately while every other chapter is listed whole?
     \end{eg}
-    \begin{eg}
-        One work (a one-shot) is a retelling of part of another work (a chaptered story) from a different chacater's point of view.
+    \begin{eg}[Shared parts]\label{eg:reprint}
+        A one-shot first appears in a fest zine and is later reprinted in a ``best of'' anthology. Separately, a single chapter of a novel is excerpted into an anthology.
+        \emph{Questions:} Can a part have more than one container? Does it get a different position in each?
+        \emph{Listing:} At top-most granularity the one-shot has two candidate records, the zine and the anthology. Which is the default, and what stops the other from also appearing?
     \end{eg}
-    \begin{eg}
-        One work (a chaptered story) is book three of a sprawling epic work
+    \begin{eg}[Crossing hierarchies]\label{eg:zine-serial}
+        A story is serialized across six issues of a zine, one chapter per issue. Each issue is an anthology. Chapter 2 is contained in both the story and issue 2, and neither of those contains the other.
+        \emph{Questions:} Can two containment hierarchies share leaves? Does each container keep its own canonical sequence?
+        \emph{Listing:} At top-most granularity, is a new chapter listed as the story or as the issue? Both are top-most, and neither contains the other.
     \end{eg}
-    \begin{eg}
+    \begin{eg}[Omnibus]\label{eg:omnibus}
+        An omnibus edition collects books 1--3 of a series that continues to exist (and continues to grow) on its own.
+        \emph{Questions:} Is the omnibus a new work, or a view of the series? Can a container's parts already be grouped works that belong to some other container?
+        \emph{Listing:} At top-most granularity, a new book 4 can only roll up to the series, but books 1--3 could roll up to either the series or the omnibus. Could one listing show both?
+    \end{eg}
+    \begin{eg}[Container with its own text]\label{eg:container-text}
+        An anthology has an editor's introduction. A novel has an author's foreword that isn't a chapter. A chapter has author's notes before and after the story text.
+        \emph{Questions:} Can a work be both grouped and text-bearing? If it can, where does its own text fall in its reading sequence?
+        \emph{Listing:} At atomic granularity, is an editor's introduction or an author's foreword a record of its own?
+    \end{eg}
+    \begin{eg}[Frame narrative]\label{eg:frame}
+        A \textit{Canterbury Tales}-style work: a frame story whose text is interleaved between embedded tales. One tale is also posted and anthologized on its own.
+        \emph{Questions:} This is example~\ref{eg:container-text} with the container's text scattered throughout the sequence instead of sitting at the front. Is the frame text a set of parts, or one text interrupted by others?
+        \emph{Listing:} At atomic granularity, is each stretch of frame text its own record?
+    \end{eg}
+    \begin{eg}[Degenerate containers]\label{eg:degenerate}
+        A story is posted as ``chaptered'' but has exactly one chapter. A WIP has zero chapters posted but lists announced chapter titles.
+        \emph{Questions:} Is a grouped work with zero or one readable parts allowed? Can a sequence contain placeholders for text that doesn't exist yet?
+        \emph{Listing:} A one-chapter work has the same record at work and atomic granularity. Is it listed once? Does a WIP with no posted text appear in a ``most recent'' listing at all?
+    \end{eg}
+    \begin{eg}[Heterogeneous parts]\label{eg:heterogeneous}
+        A ficlet collection's chapters have different ratings, pairings, and even fandoms. Some chapters are co-written with another user. An anthology is edited by one user, and each story in it is by a different author.
+        \emph{Questions:} Which metadata (author, rating, tags) lives on the container and which on the part? Is anything inherited?
+        \emph{Listing:} If only one chapter of the ficlet collection is in fandom X, does a fandom X listing at work or top-most granularity show the whole collection?
+    \end{eg}
+    \begin{eg}[Non-narrative parts]\label{eg:non-narrative}
+        A hiatus notice is posted as ``Chapter 14''. A chapter consists entirely of embedded fanart. A work has a table of contents or a glossary as a part.
+        \emph{Questions:} Is every part a work? Does every part belong in the canonical reading sequence?
+        \emph{Listing:} Does a hiatus notice posted as a chapter count as a new entry in a ``most recent'' listing?
+    \end{eg}
+    \begin{eg}[Unordered containers]\label{eg:unordered}
+        A drabble collection has no intended order. A gift-exchange collection is curated by a moderator who wrote none of its works, and its membership stays open until reveals.
+        \emph{Questions:} Is a container without a meaningful order still a container? Is its ``canonical reading sequence'' meaningful? Who controls membership?
+        \emph{Listing:} At top-most granularity, is every fill in a gift exchange listed as the exchange collection? Which containers are eligible to be records at all?
+    \end{eg}
+    \begin{eg}[Restructuring]\label{eg:restructure}
+        An author merges chapters 3 and 4, splits a long one-shot into chapters, or pulls a chapter out into its own standalone side story. Readers have left comments and bookmarks on the old parts.
+        \emph{Questions:} What is the identity of a part over time? Does restructuring change containment, the sequence, or both?
+        \emph{Listing:} When a chapter is pulled out into a standalone side story, does its record change? Does it reappear as ``new''?
+    \end{eg}
+
+    \subsection*{Relations}
+    \begin{eg}[Sequel]\label{eg:sequel}
+        One work (a chaptered story) is a sequel to another (\textit{ibid.}).
+    \end{eg}
+    \begin{eg}[Partial retelling]\label{eg:pov-retelling}
+        One work (a one-shot) is a retelling of part of another work (a chaptered story) from a different character's point of view.
+        \emph{Questions:} The relation's target is a span of another work, not the whole. Is it addressed the same way a reading sequence would address a span (see example~\ref{eg:partial-entries})?
+    \end{eg}
+    \begin{eg}[Shared continuity]\label{eg:continuity}
         One work shares a continuity with another work, but does not directly rely on the events of it (e.g., \textit{Wide Sargasso Sea}'s relationship to \textit{Jane Eyre}).
     \end{eg}
-    However, there are many more possible relations, and we'd like a schema that allows easy expansion for frequently recurring relationships not on this list, perhaps even going so far as to allow authors to define their own relations between works; this flexibility would be very useful for fandoms. At the same time a too-rarified view of Works obscures the details and distinguishing marks of relations from clients' queries. 
+    \begin{eg}[Translation of a WIP]\label{eg:translation}
+        A chaptered story is translated one chapter at a time. The translation lags the original by several chapters, and different chapters have different translators. Someone else then produces a relay translation (a translation of the translation).
+        \emph{Questions:} Does the relation hold between whole works, between chapters, or both? Does the translation's structure have to mirror the original's? Do relations chain?
+        \emph{Listing:} Is a translation its own record, or is it listed under its original? Does the answer depend on the reader's language preference?
+    \end{eg}
+    \begin{eg}[Mismatched segmentation]\label{eg:podfic}
+        A podfic covers only chapters 1--5 of a novel. Another podfic covers the whole novel as a single audio file. A third splits one long chapter across three recordings.
+        \emph{Questions:} Can a derivative's parts line up differently from its source's parts? What does ``its reading sequence'' mean for a non-text work?
+        \emph{Listing:} Is a podfic its own record? Does its granularity follow its own segmentation or its source's?
+    \end{eg}
+    \begin{eg}[Asserted relation]\label{eg:consent}
+        A remix author declares that their work is ``inspired by'' someone else's. The relation only displays on the source work once the source author approves it, and the source author may decline.
+        \emph{Questions:} Does a relation have an owner, a direction, and a state (pending, approved, refused)?
+    \end{eg}
+    \begin{eg}[Many-to-one]\label{eg:many-to-one}
+        A work is a sequel to two different works and merges their storylines. A crossover fic relates to source works in two fandoms at once.
+        \emph{Questions:} Is the relation n-ary, or a bundle of binary relations?
+    \end{eg}
+    \begin{eg}[Symmetric relation]\label{eg:companion}
+        Two one-shots by different authors were written as companion pieces for each other, and neither is prior to the other. Contrast with a sequel, which is asymmetric.
+        \emph{Questions:} Do relations need direction? Does a symmetric relation imply any order to read them in?
+    \end{eg}
+    \begin{eg}[External endpoints]\label{eg:external}
+        A fic is ``set after episode 4x12'' of its canon. A reading guide says to watch that episode, read the fic, and then listen to a podfic of the fic's sequel.
+        \emph{Questions:} Can a relation, or a sequence entry, point at something that isn't in the archive or isn't text?
+    \end{eg}
+    \begin{eg}[Relation through containment]\label{eg:inherited}
+        Fic A is a sequel to book 2 of series S.
+        \emph{Questions:} Is A therefore related to S? Is A a candidate member of S? Do relations propagate up or down containment?
+        \emph{Listing:} At top-most granularity, is A listed as S, even though A is related to a member of S rather than contained by it?
+    \end{eg}
+    \begin{eg}[Revision]\label{eg:revision}
+        An author rewrites an old fic and posts it separately as ``2.0''. Another author abandons a WIP and restarts it from scratch under a new title.
+        \emph{Questions:} Is this the same work, a new version of it, or a related work? Which one keeps the old comments and bookmarks?
+        \emph{Listing:} Should an original and its ``2.0'' both appear in a listing, or does one record stand for both?
+    \end{eg}
+    \begin{eg}[Author-defined relation]\label{eg:custom-relation}
+        A fandom has conventional relations like ``fix-it for'', ``answer fic to'', or ``fills the same prompt as''.
+        \emph{Questions:} Can relation types be open-ended while still being queryable?
+    \end{eg}
+    \begin{eg}[Invisible endpoint]\label{eg:invisible}
+        A sequel's predecessor is deleted, orphaned, or locked to logged-in users.
+        \emph{Questions:} What happens to relations and reading sequences that reference something the current reader can't see?
+        \emph{Listing:} If a work's top-most container is locked, what is its top-most record for a logged-out reader? If a container is public but one of its parts is locked, does the container's record reveal anything about that part?
+    \end{eg}
+
+    \subsection*{Reading sequences}
+    \begin{eg}[Competing orders]\label{eg:narnia}
+        A series has two widely used reading orders: publication order and in-universe chronological order (as with \textit{Narnia}).
+        \emph{Questions:} Can there be several sequences over the same set of works? Which one is canonical, and who decides?
+        \emph{Listing:} Does the choice between orders change which record is listed, or which book counts as ``latest''?
+    \end{eg}
+    \begin{eg}[Interleaved companion]\label{eg:interleaved}
+        An author posts a missing-scene one-shot, meant to be read between chapters 5 and 6 of their novel, as a separate work that isn't part of the novel.
+        \emph{Questions:} Can a sequence include entries that aren't components of the work it belongs to? Does the sequence belong to the novel, the one-shot, or neither?
+        \emph{Listing:} At top-most or work granularity, is the missing scene listed under the novel whose sequence it appears in, or as itself?
+    \end{eg}
+    \begin{eg}[Partial entries]\label{eg:partial-entries}
+        A guide says to read chapters 1--10 of A, then B, then the rest of A.
+        \emph{Questions:} Can sequence entries be spans of a work, or must they be whole works? Does the same work appearing twice in one sequence break anything?
+    \end{eg}
+    \begin{eg}[Sub-text addressing]\label{eg:subtext}
+        The situation in example~\ref{eg:partial-entries}, except that A is a single long text divided only by section breaks, not chapters.
+        \emph{Questions:} Can a sequence address positions below the smallest work? This presses directly on ``if a work has text, its only reading sequence is itself.''
+    \end{eg}
+    \begin{eg}[Author-given alternate orders]\label{eg:hopscotch}
+        \textit{Hopscotch} (\textit{Rayuela}) offers two author-given orders over one set of chapters. One reads chapters 1--56 straight through and skips the rest. The other starts at chapter 73, jumps around all 155 chapters following a ``table of instructions,'' and ends in a loop between two chapters.
+        \emph{Questions:} Can one work have several author-endorsed sequences, one of which skips parts entirely? Are repeated entries and cycles allowed?
+        \emph{Listing:} At atomic granularity, are chapters that only one of the two sequences uses still records?
+    \end{eg}
+    \begin{eg}[Branching]\label{eg:cyoa}
+        In a choose-your-own-adventure fic, each chapter ends with links to two or more possible next chapters, and some paths loop back.
+        \emph{Questions:} Is a reading sequence necessarily a list, or can it be a graph?
+    \end{eg}
+    \begin{eg}[Optional and alternative entries]\label{eg:optional}
+        A novel's interludes are marked as skippable. It has two alternate endings, chapter 20a and chapter 20b, and a reader reads one or the other.
+        \emph{Questions:} Can entries be optional, or mutually exclusive?
+    \end{eg}
+    \begin{eg}[Side trails]\label{eg:side-trails}
+        In \textit{Pale Fire}, a poem is followed by a commentary that the reader moves back and forth between. A fic has endnotes linked from mid-paragraph, and a translation has translator's notes.
+        \emph{Questions:} Is there text that is reachable from a position in the sequence without being part of the sequence?
+    \end{eg}
+    \begin{eg}[Reader-curated sequences]\label{eg:rec-list}
+        A reader publishes a rec list, or a Discworld-style reading-order chart with branching sub-series, drawn from works by many authors, none of which they wrote.
+        \emph{Questions:} Is a sequence made by someone who authored none of its entries a work? Can it be commented on, bookmarked, related to other things, or translated?
+        \emph{Listing:} Can a reader's rec list ever be the top-most record for works its curator didn't write? If not, what distinguishes it from a grouping that can be?
+    \end{eg}
+    \begin{eg}[Nested sequences]\label{eg:nested-sequences}
+        A series' sequence lists its books, and each book has its own chapter sequence.
+        \emph{Questions:} Is the series-level sequence a list of works or a flattened list of readable texts? When a book's own sequence changes, does the series' sequence change with it?
+        \emph{Listing:} At work granularity the natural record seems to be a book. How is that known from the data?
+    \end{eg}
+    \begin{eg}[Unstable sequences]\label{eg:unstable}
+        An author later inserts chapter 3.5, or publishes a planned reading order that includes works not yet written.
+        \emph{Questions:} Are positions in a sequence stable enough to hang bookmarks and ``reading progress'' on?
+        \emph{Listing:} Is an inserted chapter 3.5 ``most recent'' even though it sits in the middle of the sequence?
+    \end{eg}
+
+    \subsection*{Boundary cases}
+    \begin{eg}[Series, three ways]\label{eg:series}
+        A series of one-shots by one author has no text of its own. It could be described as a container of the one-shots, as a chain of sequel relations between them, or as nothing more than a reading sequence.
+        \emph{Questions:} If all three descriptions are available, which is primary, and can the others be derived from it?
+        \emph{Listing:} Does whichever description is primary also decide whether the series is a candidate record?
+    \end{eg}
+    \begin{eg}[Sequel and next book]\label{eg:sequel-vs-book}
+        A chaptered story is both a sequel to another story and book 2 of a series that contains both.
+        \emph{Questions:} Is the sequel relation independent of the series sequence, or implied by it? What if the two disagree?
+    \end{eg}
+    \begin{eg}[Side story numbered into the main work]\label{eg:bonus-chapter}
+        A bonus one-shot is posted as a separate work but titled ``Chapter 12.5'' of a novel.
+        \emph{Questions:} The author treats it as a part and the archive treats it as a separate work. Is that containment, relation, or sequence?
+        \emph{Listing:} At work granularity, is the ``12.5'' one-shot listed as itself or folded into the novel?
+    \end{eg}
+    \begin{eg}[Round robin]\label{eg:round-robin}
+        In a round-robin story, each part is by a different author, an organizer sets the order, and no part makes sense on its own.
+        \emph{Questions:} Is this a container, a sequence, or a chain of sequels? Who is the author of the whole?
+        \emph{Listing:} At work granularity, is each part listed separately even though none stands on its own?
+    \end{eg}
+    \begin{eg}[Same text, two structures]\label{eg:two-structures}
+        A work is imported from another site where it was split into 30 chapters. On this archive it is split into 12. It is also downloadable as a single ``entire work'' document.
+        \emph{Questions:} Is chaptering a property of the work (containment) or a way of reading it (a sequence)?
+        \emph{Listing:} At atomic granularity, which chaptering produces the records: the 30 chapters or the 12?
+    \end{eg}
+    \subsection*{Listings and default records}
+    \begin{eg}[The motivating case]\label{eg:iliad}
+        The \textit{Iliad} belongs to the Trojan Epic Cycle. It also belongs to a ``Works of Homer'' collection alongside the \textit{Odyssey}, and to a two-volume edition that splits it after book XII. A listing turns up book VII.
+        \emph{Listing:} What is book VII's record at each of the three granularities? Is the Epic Cycle or ``Works of Homer'' the top-most record? Does the two-volume split count as a level?
+    \end{eg}
+    \begin{eg}[Where is the work level?]\label{eg:work-level}
+        A series contains books, books contain parts, parts contain chapters, and some chapters contain scenes that were posted separately. The same listing also includes a one-shot with no subdivisions at all.
+        \emph{Listing:} Is ``work granularity'' a marked level in each hierarchy, or is it relative to something? For the one-shot, all three granularities give the same record. Does the listing still read consistently?
+    \end{eg}
+    \begin{eg}[Siblings collapse]\label{eg:siblings}
+        New chapters from two different books of the same series both match a listing.
+        \emph{Listing:} At top-most granularity, is the series listed once? This asks about deduplicating distinct works that share a record, not one work in several sequences.
+    \end{eg}
+    \begin{eg}[Matches at two levels]\label{eg:double-match}
+        A novel is tagged Y, and chapter 3 is also tagged Y on its own.
+        \emph{Listing:} At work granularity, the novel appears once, not once for itself and again for chapter 3. At atomic granularity, are all chapters listed, or only chapter 3?
+    \end{eg}
+    \begin{eg}[Match above or below the record]\label{eg:match-level}
+        Tag Y appears only on chapter 3 of a novel. Separately, tag Z appears only on a series and on none of its books or chapters.
+        \emph{Listing:} Does a Y listing at work granularity include the novel? Does a Z listing at atomic granularity include the series' chapters?
+    \end{eg}
+    \begin{eg}[Stale container, fresh part]\label{eg:recency}
+        A novel first posted in 2019 gets a new chapter today.
+        \emph{Listing:} At work granularity, is the novel among the ``most recent'' works? Which date does its record carry: first posted, last updated, or completed?
+    \end{eg}
+    \begin{eg}[Two series by one author]\label{eg:two-series}
+        An author puts one one-shot in both their ``Coffee Shop AU'' series and their ``Holiday Fics'' series.
+        \emph{Listing:} At top-most granularity there are two equally plausible records, both made by the same person. Which is the default, and does the author get to choose?
+    \end{eg}
+    \begin{eg}[Groupings by different owners]\label{eg:mixed-owners}
+        A one-shot is in its author's series, a moderator's gift-exchange collection, and a reader's rec list.
+        \emph{Listing:} Which of these, if any, are candidates for its top-most record? Does the answer depend on who made the grouping?
+    \end{eg}
+    \begin{eg}[Record changes after the fact]\label{eg:record-drift}
+        Today a one-shot stands alone. Next week its author adds it to a new series, while a reader is paging through a listing that includes it.
+        \emph{Listing:} Does the one-shot's record change retroactively? Could it show up on page 1 as itself and on page 2 as the series?
+    \end{eg}
+    \begin{eg}[Cross-posted copies]\label{eg:cross-post}
+        An author posts a one-shot on its own and also posts the same text as chapter 4 of their ficlet collection. These are two works with identical text, not one work in two containers.
+        \emph{Listing:} Should a listing deduplicate them? Could the data model even tell that they are the same?
+    \end{eg}
+
     \section{Options}
 
 \subsection{Works nest other works}
