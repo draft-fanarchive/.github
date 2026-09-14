@@ -1,0 +1,45 @@
+% Typed in TeX because that's what I like, if this ever turns serious and other people contribute these really \textbf{should} be formatted in markdown. 
+\documentclass{amsart}
+\usepackage{verbatim}
+\usepackage{listings}
+\newtheorem*{prob}{Problem}
+\newtheorem{opt}{Option}
+\theoremstyle{remark}
+\newtheorem{eg}{Example}
+\title{Reading Sequences}
+\begin{document}
+\maketitle
+\begin{abstract}
+Describes one proposed way of organizing written works 
+\end{abstract}
+\section{Motivation}
+We seek to decouple the relationship of longer textual works from their storage,\footnote{Expansion to other kinds of fanwork -- interstitial fan-art, podfic chapters, etc., is deliberately deferred.} allowing multiplicity of reading sequences, and convenient scaling between scopes (\emph{e.g.}, chapters in a novel, novels in a series, several series in a shared continuity, etc.) To this end we propose to split the actual text apart from the sequence it is read in. In this view a longer work created by an author is just one -- admittedly privileged -- sequential order in which to read related pieces of text. 
+
+We also take inspiration from Wikipedia's layers of navigational boxes and the control flow of generator expressions in Python and JavaScript, where, on the one hand, multiple layers of navigation are shown to the user, and, on the other, sequences are determined by local computation of the next value, and control is yielded back when those run out. 
+\section{Definitions}
+We refer to a work containing text as a \emph{textual node}. A reading sequence contains -- either as direct children or transitively via other reading sequences -- multiple textual nodes. The direct children of a reading sequence we call \emph{steps}. Each step refers to either a textual node or another reading sequence. Distinct steps of one sequence may refer to the same thing (\emph{e.g.}, a reading guide that sends the reader back to re-read an earlier chapter), so a step is an occurrence of a child in the sequence, not the child itself.
+
+To represent "here is the suggested order to read these works in," a reading sequence carries a directed graph $G = (S, E)$ whose vertices $S$ are its steps, where an edge $s \to t$ means ``read $t$ after $s$.'' Call a directed cycle in $G$ a \emph{closing loop} if no edge leaves it, \emph{i.e.}, every edge out of a step on the cycle goes to another step on the same cycle. We require that:\begin{enumerate}
+ \item There is a designated \emph{start} step $s_0$ from which every step in $S$ is reachable.
+ \item Every directed cycle in $G$ is a closing loop.
+ \item No edge enters $s_0$, unless $s_0$ lies on a closing loop.
+ \item No reading sequence contains itself, either directly or transitively through the steps of other reading sequences.
+\end{enumerate}
+An \emph{end} of a reading sequence is either a step with no outgoing edges, or a closing loop taken as a whole.
+
+Some consequences. Condition (1) makes $G$ weakly connected, and together with (3) makes $s_0$ the only step with nothing before it. Every reading sequence has at least one end: following edges from $s_0$ either stops at a step with no outgoing edges, or revisits a step, and that step lies on a cycle, which by (2) is a closing loop. Condition (2) also forces two closing loops to be disjoint, and forces each one to be a simple cycle (a loop with a shortcut or a second loop through the same step would have an edge leaving one of its cycles). So collapsing each closing loop to a single step leaves a DAG with the single source $s_0$. This definition excludes is any loop a reader can leave: a choose-your-own-adventure path that returns to an earlier chapter and then continues elsewhere is not a reading sequence.
+
+Re-reading is not looping. Because steps are occurrences, ``read chapter 3 again, then go on'' is a new step referring to chapter 3, not an edge back to the earlier step. A cycle in $G$ therefore always means reading that never runs out, which is why it may only come at an end. In the generator analogy, a reading sequence ending in a closing loop is an infinite generator and never yields control back to an enclosing sequence on its own. Condition (4) ensures that expanding steps into the sequences they refer to always bottoms out in textual nodes, so that the depth defined below exists.
+We also allow two special textual nodes ``preferatory remarks'' and ``concluding remarks'' for an author or editor to add commentary about a reading sequence, but which are not necessarily part of the work proper (note that this may be applied to a single textual node, so that the typical novel is a sequence of one introduction chapter, and then $n$ chapters with author's pre- and post-notes for that chapter, followed by a closing remarks chapter).
+
+%Previous attempt at this formalization using order types --now abandoned: \emph{simple reading sequence} is a directed graph on only nodes. Other reading sequences need not be restricted to nodes. We say a reading sequence is \emph{composable} if the directed graph can be read as a partial order with the property that every element shares at least one ascending chain with an element maximal with respect to the order. Reading sequences writ large may be made of both textual node and other reading sequences, with the requirement that a reading sequence that is not maximal must be composable.\footnote{}
+\section{Navigation}
+A user navigates a given sequence which is preserved in each view. (That is, between URL params, cookies, or some other means, ``I am reading Chapter 3 of \emph{The Two Towers}, the second book of \emph{The Lord of the Rings}'' is distinguished from ``I am reading Chapter 3 of \emph{The Two Towers}'') when the user reaches an end of a given sub-sequence, they are presented with a ``Next in (sequence name here)'' navigational box. Note that, in the cyclic cases, a single node may have both ``Next in (sub-sequence)'' and ``Next in (broader sequence)'' labels. 
+
+% Current known limitation: We don't have a clean way to distinguish 'A precedes B and C, and B and C precede D, but there's no firm rule on whether B or C come before the other' from 'Read A and then either B or C but not both, then D.' We need to write a section saying digraph diamonds indicate sequence agnosticism, but are not exclusive. Choose your own adventure cases with exclusive or are deferred for now (but can be implemented as several sequences starting from the same first few textual works)
+
+\section{Presentation and Defaults}
+The granularity of presentation of works is delegated to user preferences. A sequence containing an indivisible text node only is of depth $0$, a typical novel containing several sequential text nodes is of depth $1$, a series of works containing novels is of depth $2$, etc. In mixed cases of novels, series, text nodes, etc. a reading sequence is of depth one greater than its deepest node. Users specify their preferred depth $d$ and results in the usual AppView are presented bundled into depth $d$ by default. Works of lesser depth may appear if they are not in any reading sequence of depth $d$ (in which case, whatever the deepest sequence containing them is presented)
+
+In the default AppView, sequences by the same author as all their constituent works are given presentation priority over other sequences. If multiple such sequences exist for one work, it is attributed to being contained in the earlist-published such sequence. The consequences of this are not fully sketched out and I need to come back to this, or run it through test cases. 
+\end{document}
