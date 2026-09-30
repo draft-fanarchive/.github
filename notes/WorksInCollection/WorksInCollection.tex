@@ -40,38 +40,46 @@
     \subsection*{Containment}
     \begin{eg}[Basic serial]\label{eg:chapter-novel}
         One work (a chapter) is contained within another (a novel).
+        \emph{Requirement:} For a given granularity, only one of the two works displays in search results. Tags should roll up from chapter to novel.
         \emph{Listing:} Baseline: at atomic granularity the record is the chapter; at work and top-most granularity it is the novel. The other examples are compared against this.
     \end{eg}
     \begin{eg}[Basic anthology]\label{eg:oneshot-anthology}
         One work (a one-shot) is contained within another (an anthology).
+        \emph{Requirement:} For a given granularity, only one of the two works displays in search results. Tags should roll up from chapter to anthology.
         \emph{Listing:} At top-most granularity, is a one-shot that can be read on its own listed as the anthology? At work granularity, is it listed as itself?
     \end{eg}
     \begin{eg}[Deep nesting]\label{eg:epic}
         One work (a chaptered story) is book three of a sprawling epic work.
+        \emph{Requirement:} For a given granularity, only one of the three works (chapter, story, and epic) displays in search results. Tags should roll up transitively.
         \emph{Listing:} At work granularity, is the record the epic, book three, or something in between?
     \end{eg}
     \begin{eg}[Uneven depth]\label{eg:uneven-depth}
         A novel's chapters are mostly single texts, but chapter 7 is split into 7a and 7b, which were posted separately.
+        \emph{Requirement:} There is no requirement that for any given granularity ``chapter 7 as a whole'' is display-able in search results.
         \emph{Questions:} Must siblings sit at the same depth? Is chapter 7 a grouped work, and does it have its own sequence?
         \emph{Listing:} At atomic granularity, are 7a and 7b listed separately while every other chapter is listed whole?
     \end{eg}
     \begin{eg}[Shared parts]\label{eg:reprint}
         A one-shot first appears in a fest zine and is later reprinted in a ``best of'' anthology. Separately, a single chapter of a novel is excerpted into an anthology.
+        \emph{Requirement:} There should have sufficient data from the model that a policy can distinguish between place of first publication and re-prints, so that the novel and fest zine display in search results but the reprints do not (or vice versa if someone chooses to set a different policy). 
         \emph{Questions:} Can a part have more than one container? Does it get a different position in each?
         \emph{Listing:} At top-most granularity the one-shot has two candidate records, the zine and the anthology. Which is the default, and what stops the other from also appearing?
     \end{eg}
     \begin{eg}[Crossing hierarchies]\label{eg:zine-serial}
         A story is serialized across six issues of a zine, one chapter per issue. Each issue is an anthology. Chapter 2 is contained in both the story and issue 2, and neither of those contains the other.
+        \emph{Requirement:} A policy should make it possible to display the issues of a zine, but not the serial (or vice versa). If a new chapter is added to the serial that is not in any zine or anthology, it must be possible to display both story and zines.
         \emph{Questions:} Can two containment hierarchies share leaves? Does each container keep its own canonical sequence?
         \emph{Listing:} At top-most granularity, is a new chapter listed as the story or as the issue? Both are top-most, and neither contains the other.
     \end{eg}
     \begin{eg}[Omnibus]\label{eg:omnibus}
         An omnibus edition collects books 1--3 of a series that continues to exist (and continues to grow) on its own.
+        \emph{Requirement:} A policy should be able to discriminate between the omnibus edition and original growing story, displaying one or the other.
         \emph{Questions:} Is the omnibus a new work, or a view of the series? Can a container's parts already be grouped works that belong to some other container?
         \emph{Listing:} At top-most granularity, a new book 4 can only roll up to the series, but books 1--3 could roll up to either the series or the omnibus. Could one listing show both?
     \end{eg}
     \begin{eg}[Container with its own text]\label{eg:container-text}
         An anthology has an editor's introduction. A novel has an author's foreword that isn't a chapter. A chapter has author's notes before and after the story text.
+        \emph{Requirement:} work objects must have slots for meta-text available (i.e., a place to attach author's/editor's commentary to a work that is not part of the work proper)
         \emph{Questions:} Can a work be both grouped and text-bearing? If it can, where does its own text fall in its reading sequence?
         \emph{Listing:} At atomic granularity, is an editor's introduction or an author's foreword a record of its own?
     \end{eg}
@@ -82,13 +90,15 @@
     \end{eg}
     \begin{eg}[Degenerate containers]\label{eg:degenerate}
         A story is posted as ``chaptered'' but has exactly one chapter. A WIP has zero chapters posted but lists announced chapter titles.
+        \emph{Requirement:} There is no requirement to list or index work that has not yet been published.
         \emph{Questions:} Is a grouped work with zero or one readable parts allowed? Can a sequence contain placeholders for text that doesn't exist yet?
         \emph{Listing:} A one-chapter work has the same record at work and atomic granularity. Is it listed once? Does a WIP with no posted text appear in a ``most recent'' listing at all?
     \end{eg}
     \begin{eg}[Heterogeneous parts]\label{eg:heterogeneous}
         A ficlet collection's chapters have different ratings, pairings, and even fandoms. Some chapters are co-written with another user. An anthology is edited by one user, and each story in it is by a different author.
+        \emph{Requirement:} tags should be able to roll up to multiple parent works. For an appropriate given level of granularity of a cross-fandom collection, the collection should appear in search results for each fandom included.
         \emph{Questions:} Which metadata (author, rating, tags) lives on the container and which on the part? Is anything inherited?
-        \emph{Listing:} If only one chapter of the ficlet collection is in fandom X, does a fandom X listing at work or top-most granularity show the whole collection?
+        \emph{Listing:} If only one chapter of the ficlet collection is in fandom X, does a fandom X listing at work or top-most granularity show the whole collection? 
     \end{eg}
     \begin{eg}[Non-narrative parts]\label{eg:non-narrative}
         A hiatus notice is posted as ``Chapter 14''. A chapter consists entirely of embedded fanart. A work has a table of contents or a glossary as a part.
