@@ -1,0 +1,174 @@
+% Typed in TeX because that's what I like, if this ever turns serious and other people contribute these really \textbf{should} be formatted in markdown.
+% Companion to ReadingSequences.tex: a counter-proposal with fewer entities.
+\documentclass{amsart}
+\usepackage{verbatim}
+\usepackage{listings}
+\newtheorem*{prob}{Problem}
+\newtheorem{opt}{Option}
+\newtheorem{rem}{Remark}
+\newtheorem{inv}{Invariant}
+\theoremstyle{remark}
+\newtheorem{defn}{Definition}
+\newtheorem{eg}{Example}
+\newtheorem{oq}{Open question}
+\title{Groups and Sequences}
+\begin{document}
+\begin{abstract}
+A counter-proposal to \emph{Reading Sequences}. It keeps that draft's ownership principle and its separation of reading order from organization, but replaces atoms, container sets, containers, references, boundaries, and reading sequences with three entities: atoms, groups, and sequences.
+\end{abstract}
+\maketitle
+
+\section{Motivation}
+\emph{Reading Sequences} accumulated entities: container sets, containers, references, boundaries, and reading sequences, on top of atoms. Several of the problems found when running the \emph{Works in Collection} examples against it came from the seams between them:
+\begin{itemize}
+  \item Containers contain container \emph{sets}, which have no identity, so it is unclear whether a novel contains the chapter container or a copy of its contents.
+  \item Nothing decides when a grouping is a container and when it is a boundary.
+  \item Containers are unordered, but nothing links a container to the order it should be read in.
+  \item The chain of canonical containment does not say who sets each link, or whether a canonical home must actually contain its child.
+\end{itemize}
+The goal here is the smallest model that keeps one principle:
+\begin{prob}[Ownership]
+Authors own atoms, and own the choice of each atom's canonical home. The creator of a larger group owns the choice of that group's canonical home.
+\end{prob}
+Membership and reading order are kept as separate entities, because they really are different concerns: one answers ``what belongs here, and who owns it,'' the other ``in what order should it be read.'' A series can have several orders (\emph{Narnia}, \emph{Hopscotch}) without having several memberships, and an alternate order should not acquire tags, records, or a place in the ownership tree just by existing.
+
+\section{Entities}
+\begin{lstlisting}[frame=single,basicstyle=\small]
+type Atom {
+  id, owner, content, notes
+  home: Group?          # chosen by atom.owner
+}
+
+type Group {
+  id, owner, metadata   # title, tags, size hint,
+                        # preface, afterword
+  members: {Atom | Group | Sequence}   # a set
+  home: Group?          # chosen by group.owner
+  suggested: Sequence?  # chosen by group.owner
+}
+
+type Sequence {
+  id, owner, metadata   # title, tags, preface, afterword
+  steps: [Step!]!
+  loopTo: Step?
+}
+
+type Step { id, target: Atom | Group | Sequence }
+\end{lstlisting}
+
+\begin{defn}[Atom]A user-uploaded document: a chapter, a one-shot, a recording, a piece of art. Atoms are the only entities with content of their own.\end{defn}
+
+\begin{defn}[Group]An identified, owned, \emph{unordered} set of members. Members may be atoms, groups, or sequences. A group has no content of its own beyond metadata, including the preface and afterword remarks.\end{defn}
+
+\begin{defn}[Sequence]An identified, owned list of steps, each targeting an atom, group, or sequence. A step targeting a group means ``read this group in its effective order'' (\S\ref{sec:orders}); a step targeting a sequence means ``read this sequence.'' If \lstinline|loopTo| is set, the step after the last is \lstinline|loopTo|, and the sequence ends in that cycle.\end{defn}
+
+\begin{rem}Steps have their own identity so that the same target can appear more than once in one sequence (``chapters 1--10 of A, then B, then the rest of A''), and so that bookmarks and reading progress survive the insertion of a chapter 3.5. Group membership is a plain set and needs no such device.\end{rem}
+
+\begin{rem}A sequence is the old reading sequence restricted to its only possible shape. In \emph{Reading Sequences}, a start step from which every step is reachable, together with out-degree at most $1$, already forces a single path, optionally ending in one cycle. A list plus \lstinline|loopTo| says the same thing directly.\end{rem}
+
+\subsection*{What became of the old entities}
+\begin{center}\small
+\begin{tabular}{ll}
+\emph{Reading Sequences} & here \\ \hline
+atom & atom \\
+container set & gone; the shape is the tree of \lstinline|home| pointers \\
+container & a role, not a type: a group that is someone's home \\
+canonical container & \lstinline|home| \\
+boundary & a group \\
+reference & a step (inside sequences only) \\
+reading sequence & sequence \\
+nested unordered boundary & a step targeting a group with no suggested order \\
+\end{tabular}
+\end{center}
+
+\section{Invariants}
+\begin{inv}[Your home lists you]\label{inv:home}If $X.\mathrm{home} = G$, then $X \in G.\mathrm{members}$.\end{inv}
+\begin{inv}[Well-founded]\label{inv:acyclic}Home pointers form no cycle. Membership and steps form no cycle, except through \lstinline|loopTo|.\end{inv}
+\begin{inv}[Sequences are homeless]Only atoms and groups have homes. A sequence may be a member of a group, but is never anyone's home and never has one.\end{inv}
+
+\section{Ownership and homes}
+Invariant~\ref{inv:home} splits control between two owners, and neither can override the other:
+\begin{itemize}
+  \item The \emph{group's owner} decides what may be listed in it. This is the consent mechanism for zines, gift exchanges, round robins, and anthologies.
+  \item The \emph{member's owner} decides which of the groups listing it is its home.
+\end{itemize}
+An atom may be listed in many groups (a fest zine, a ``best of'' anthology, a reader's rec list) but has at most one home. An atom or group with no home is standalone.
+
+If a group's owner removes a member whose home it was, that member's \lstinline|home| reverts to null: the member becomes standalone rather than the removal being refused.
+
+\section{Records and depth}
+The home pointers form a forest, the \emph{home tree}. Listing records are drawn only from it.
+
+\begin{defn}[Record candidate]An atom, or a group that is the home of at least one atom or group. Groups that are nobody's home (an omnibus, a rec list, a reprint anthology with no originals) and all sequences are never records in a work listing. They may be listed in their own kinds of listings (``rec lists in fandom X'').\end{defn}
+
+\begin{defn}[Depth]An atom has depth $1$. A group has depth one greater than the greatest depth among the things whose home it is. Members that are merely listed (reprints, sequences) do not count.\end{defn}
+
+At \emph{atomic} granularity an atom's record is itself; at \emph{top-most} granularity it is the root of its home chain. At \emph{work} granularity it is the first ancestor carrying a work-sized hint, falling back on depth when no hint exists. As in \emph{Reading Sequences}, AppViews should honor size hints before depth.
+
+\section{Orders}\label{sec:orders}
+``Default order'' has two meanings, and they are kept apart.
+\begin{defn}[Suggested order]The sequence a group's owner offers as the way to read it: \lstinline|Group.suggested|. It may omit members, repeat them, or loop, as \emph{Hopscotch}'s orders do. It is optional, and only the group's owner may set it; anyone else's order over the same group is simply another sequence.\end{defn}
+\begin{defn}[Fallback order]An arbitrary but \emph{stable} total order on a group's members, each appearing exactly once (for instance, by time of addition, then by ID). It always exists and is derived, not stored.\end{defn}
+The fallback must be stable rather than merely arbitrary, because ``next'' and bookmarks depend on it. It is derived from a rule rather than stored as a member list, so that its order visibly carries no meaning.
+
+\begin{defn}[Effective order]When a reader reaches a group, whether by opening it or as a step, the order used is the first available of: the reader's own choice, the group's suggested order, the fallback order.\end{defn}
+A reader, or a group with no suggested order, can still be indifferent about order: the AppView navigates the fallback order but does not present it as meaningful (for instance, by not labelling the next item ``Next chapter''). Members omitted by a suggested order, such as the chapters \emph{Hopscotch}'s first order skips, remain records and remain reachable through the fallback order, but are never on the suggested ``next'' path.
+
+\section{Membership is wider than home}
+A curator sometimes needs to point at a particular reading of a group rather than at the group. Because sequences may be members of groups (and targets of steps), a rec list can say any of:
+\begin{center}\small
+\begin{tabular}{ll}
+The rec list includes\ldots & meaning \\ \hline
+the \emph{Hopscotch} group & read it however you normally would (effective order) \\
+a sequence over \emph{Hopscotch} & read it in this particular order \\
+a chapter atom & just this chapter \\
+\end{tabular}
+\end{center}
+This adds no entity. The work done by references in \emph{Reading Sequences} (repeats, positions) is done by steps inside sequences, and group membership stays a plain set.
+
+An unordered rec list is a group that is nobody's home. A ranked rec list, or a reading guide, is a sequence.
+
+\section{Tags}
+``Tags roll up'' covers two computations, which follow different paths.
+\begin{description}
+  \item[Matching] decides which records a work listing returns. It follows the home tree only. Reprints, omnibuses, rec lists, and sequences therefore never cause a work to appear twice.
+  \item[Display] decides which tags an entity shows, and can be filtered by in listings of its own kind. It follows membership and steps:
+  \begin{itemize}
+    \item A group displays the union of its own tags and its members' display tags.
+    \item A sequence displays the union of its own tags and the display tags of what its steps target. It rolls up along steps, not along the groups behind them: an order that skips chapter 55 does not inherit chapter 55's warnings.
+    \item A step targeting a whole group takes that group's full display tags, even if the reader's effective order skips some members. For warnings this is the conservative choice.
+  \end{itemize}
+\end{description}
+Both computations are per reader: what a reader cannot see contributes nothing. Both terminate by Invariant~\ref{inv:acyclic}; a \lstinline|loopTo| only revisits steps already counted. Tags never roll down.
+
+\section{Permissions}
+Adding a member to a group, or a step to a sequence, that targets someone else's atom, group, or sequence is what \emph{Reading Sequences} called referencing it, and is governed by the target owner's reference policy. As there, republishing permissions narrow: the most permissive policy a group or sequence can carry is bounded by the intersection of the policies of what it targets.
+
+Who may \emph{read} an entity is a separate question from who may reference it. A logged-out reader references nothing, so reading permissions need their own mechanism; see open questions.\footnote{The AT Protocol permissioned data proposal (\texttt{https://github.com/bluesky-social/proposals/tree/main/0016-permissioned-data}) is the likely home for this mechanism. It is still evolving, so this design is developed against a moving target; that is acceptable while we are in the ideation phase, but the fit should be rechecked against the current text before anything is finalized. See also the footnote on reference policy in \emph{Reading Sequences}.}
+
+\section{Remarks}
+Groups and sequences both carry preface and afterword remarks in their metadata, so a rec list or reading guide can be introduced as readily as an anthology. Atoms carry their own notes. Because remarks are metadata, they play no part in membership or in equality.
+
+\section{Examples}
+Brief notes on how the harder examples from \emph{Works in Collection} land.
+\begin{description}
+  \item[Shared parts] The anthology lists the one-shot; the one-shot's home is the zine. Only the zine is the one-shot's record; the anthology is a record only if some other work has its home there.
+  \item[Omnibus] A group listing books 1--3 that is nobody's home. It lists the books by ID, so it cannot go stale.
+  \item[Crossing hierarchies] Chapter 2's author chooses the story or issue 2 as its home; the zine editor's consent is given by listing it.
+  \item[Competing orders, \emph{Hopscotch}] One group, several sequences. Nothing about listings changes. \emph{Hopscotch}'s second order is a list beginning at chapter 73 with \lstinline|loopTo| closing the final cycle.
+  \item[Interleaved companion] A sequence through the novel's chapters and the missing scene. The missing scene keeps its own record.
+  \item[Partial entries] Steps targeting chapters 1--10 of A, then A's sequel B, then A's remaining chapters.
+  \item[Nested sequences] A series sequence whose steps target books; each book is read in its effective order.
+  \item[Reader-curated sequences] A ranked rec list is a sequence, so it is never a record. An unordered rec list is a group, and is a record for a work only if that work's author chooses it as home. Either way it displays its entries' tags.
+  \item[Groupings by different owners] The author's series, the gift exchange, and the reader's rec list all list the one-shot, so all three are candidates for its home. The author alone chooses among them. Nothing forbids choosing the rec list, which is consistent with the ownership principle.
+  \item[Unstable sequences] Inserting chapter 3.5 adds a step; existing steps, and progress recorded against them, are unaffected.
+\end{description}
+
+\section{Open questions}
+\begin{oq}[Gaps in depth]In an uneven home tree an atom's chain can skip the user's preferred depth $d$ (a novel with one split chapter jumps from depth $1$ to $3$). Use the nearest ancestor of depth at least $d$, or at most $d$?\end{oq}
+\begin{oq}[Single-member groups]A chaptered work with exactly one chapter gives two records with the same text. Collapse them when listing, or forbid the shape?\end{oq}
+\begin{oq}[Homes for sequences]A companion reading guide might want to live canonically in its series. Giving sequences homes would pull them into records and matching; refused for now.\end{oq}
+\begin{oq}[Reading permissions]How are ``locked to logged-in users'' and similar policies expressed, given that reference policy does not cover them? For a logged-out reader whose atom's top-most home is locked, which ancestor is the record?\end{oq}
+\begin{oq}[Branching and optional steps]Sequences admit exactly one next step. Allowing several would be the extension point for choose-your-own-adventure works and alternate endings.\end{oq}
+\begin{oq}[Placeholders]Steps and members must target existing entities, so planned chapters, announced works, and external endpoints (``watch episode 4x12'') cannot be expressed.\end{oq}
+\end{document}
