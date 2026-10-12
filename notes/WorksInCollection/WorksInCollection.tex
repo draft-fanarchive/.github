@@ -51,7 +51,6 @@
     \begin{eg}[Deep nesting]\label{eg:epic}
         One work (a chaptered story) is book three of a sprawling epic work.
         \emph{Requirement:} For a given granularity, only one of the three works (chapter, story, and epic) displays in search results. Tags should roll up transitively.
-        \emph{Listing:} At work granularity, is the record the epic, book three, or something in between?
     \end{eg}
     \begin{eg}[Uneven depth]\label{eg:uneven-depth}
         A novel's chapters are mostly single texts, but chapter 7 is split into 7a and 7b, which were posted separately.
@@ -90,7 +89,7 @@
     \end{eg}
     \begin{eg}[Degenerate containers]\label{eg:degenerate}
         A story is posted as ``chaptered'' but has exactly one chapter. A WIP has zero chapters posted but lists announced chapter titles.
-        \emph{Requirement:} There is no requirement to list or index work that has not yet been published.
+        \emph{Requirement:}We must be able to describe an in-progress chaptered work with one extant chapter. There is no requirement to list or index work that has not yet been published, and if this may be discouraged by design we should.
         \emph{Questions:} Is a grouped work with zero or one readable parts allowed? Can a sequence contain placeholders for text that doesn't exist yet?
         \emph{Listing:} A one-chapter work has the same record at work and atomic granularity. Is it listed once? Does a WIP with no posted text appear in a ``most recent'' listing at all?
     \end{eg}
@@ -102,16 +101,19 @@
     \end{eg}
     \begin{eg}[Non-narrative parts]\label{eg:non-narrative}
         A hiatus notice is posted as ``Chapter 14''. A chapter consists entirely of embedded fanart. A work has a table of contents or a glossary as a part.
+        \emph{Requirement:} The design should be easily extendable to non-text, non-narrative works. Where possible, hiatus notices and administrative text should be steered out of the contents of the work itself.
         \emph{Questions:} Is every part a work? Does every part belong in the canonical reading sequence?
         \emph{Listing:} Does a hiatus notice posted as a chapter count as a new entry in a ``most recent'' listing?
     \end{eg}
     \begin{eg}[Unordered containers]\label{eg:unordered}
         A drabble collection has no intended order. A gift-exchange collection is curated by a moderator who wrote none of its works, and its membership stays open until reveals.
+        \emph{Requirement:} Works must have a way to express that their contents do not have a prescribed reading order. Questions of anonymity or placeholder fills for fiction are deliberately refused (the first as either an app-view problem or awaiting AT Proto advancements, the latter as something the fanarchive simply does not support)
         \emph{Questions:} Is a container without a meaningful order still a container? Is its ``canonical reading sequence'' meaningful? Who controls membership?
         \emph{Listing:} At top-most granularity, is every fill in a gift exchange listed as the exchange collection? Which containers are eligible to be records at all?
     \end{eg}
     \begin{eg}[Restructuring]\label{eg:restructure}
         An author merges chapters 3 and 4, splits a long one-shot into chapters, or pulls a chapter out into its own standalone side story. Readers have left comments and bookmarks on the old parts.
+        \emph{Requirement:} The container model need not provide for continuity in comments and bookmarks of restructuring, but must not prevent the AppView from making migratory updates of bookmarks on behalf of a user.
         \emph{Questions:} What is the identity of a part over time? Does restructuring change containment, the sequence, or both?
         \emph{Listing:} When a chapter is pulled out into a standalone side story, does its record change? Does it reappear as ``new''?
     \end{eg}
@@ -216,6 +218,7 @@
     \end{eg}
     \begin{eg}[Nested sequences]\label{eg:nested-sequences}
         A series' sequence lists its books, and each book has its own chapter sequence.
+        \emph{Requirement:} Any app-view must be able to understand the recommended reading order of the books, as well as the recommended reading order of each chapter in each book.
         \emph{Questions:} Is the series-level sequence a list of works or a flattened list of readable texts? When a book's own sequence changes, does the series' sequence change with it?
         \emph{Listing:} At work granularity the natural record seems to be a book. How is that known from the data?
     \end{eg}
@@ -257,6 +260,7 @@
     \end{eg}
     \begin{eg}[Where is the work level?]\label{eg:work-level}
         A series contains books, books contain parts, parts contain chapters, and some chapters contain scenes that were posted separately. The same listing also includes a one-shot with no subdivisions at all.
+        \emph{Requirement:} A reader should be able to express preferences as to how the work is presented (as separately listed books, as separately listed scenes). An author should be able to mark which works do and do not appear as readable in isolation (this book in the series may be read on its own, but this scene in the chapter makes no sense outside of the chapter and should not be)
         \emph{Listing:} Is ``work granularity'' a marked level in each hierarchy, or is it relative to something? For the one-shot, all three granularities give the same record. Does the listing still read consistently?
     \end{eg}
     \begin{eg}[Siblings collapse]\label{eg:siblings}

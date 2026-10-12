@@ -2,6 +2,7 @@
 \documentclass{amsart}
 \usepackage{verbatim}
 \usepackage{listings}
+\usepackage{hyperref}
 \newtheorem*{prob}{Problem}
 \newtheorem{opt}{Option}
 \newtheorem{rem}{Remark}
@@ -16,55 +17,67 @@
 Describes one proposed way of organizing written works 
 \end{abstract}
 
-%\section{Scope}
-%We seek the model the most common kinds of work relations: organizational curation, and reading order. We deliberately do not take up modelling work relations such as ``translation of,'' ``inspired by,'' or ``retelling of.'' We also do not take on modelling internal text navigation (follow this footnote to its body, or follow from the body back to the in-line footnote mark; read cto I, ll 1--12 of the poem, then see the commentary on it). Internal text navigation can be addressed via supplementary designs, or via good old fashioned hyperlinks.
+\section{Assumptions and Scope}
+This document attempts to describe the principles organizing the structure and surfacing of works to hot-path feeds such as ``latest fics in [fandom],'' ``latest fics in [popular trope tag]'' and so on. It is assumed this is done in the context of a single AT Proto space the access to which is mediated by appviews.\footnote{See \url{https://github.com/bluesky-social/proposals/tree/main/0016-permissioned-data}. In particular, the most significant details for this project is: spaces do not exercise granular permissioning -- a read permission is a read permission to the entire space.}  Our primary focus is on access control both from the space itself and from the medaiting app views. The aim of this sketch is to introduce a set of abstractions for handling the organization and curation of works, as well as a second set of definitions describing the minimal qualities necessary of any implemenation of those abstractions. Our secondary focus is on questions of work organization. Concerns that are not as proximately connected to questions of access or work groupings are largely outside the scope of this document, though access design naturally affects what is and is not possible to model. 
 
+% Terminology note we should set: records are just data on a PDS somewhere. Containers are well-formed records which describe container sets, etc. etc.
 \section{Definitions}
-\begin{defn}[Atom]Call a user-uploaded document an \emph{atom}. We will presume, without loss of generality, that we are dealing with sequences of narrative text, but a user could with equal ease upload an audio recording or piece of fanart. We will strive to use lower-case letters for atoms: one-shot $a$, chapter $b$, etc.\end{defn}
+\begin{defn}[Atom]Call a space repo record with a user-uploaded document an \emph{atom}. We will presume, without loss of generality, that we are dealing with sequences of narrative text, but a user could with equal ease upload an audio recording or piece of fanart.\footnote{Not included in this design, but a natural point of extension for later work: external references to entities not within the space could also be atomic records.} We will strive to use lower-case letters for atoms: one-shot $a$, chapter $b$, etc.\end{defn}
+\begin{defn}[Container set]A singleton set containing one atom is a \emph{container set}. We inductively extend the definition of container sets so that any set whose elements are all container sets is itself a container set.\end{defn}
+\begin{rem}This means that containership of sets is not closed under pairwise union: $\{a\}\cup\{\{a\},\{b\}\}$ is not a container set. It does make the empty set a container set.\end{rem}
 
-\begin{defn}[Container]A singleton set containing one atom is a \emph{container set}. We inductively extend the definition of container sets to also cover non-empty sets whose elements are all container sets. A container set paired with a unique identifier we will call a \emph{container}. Two container sets are equal under the normal rules of set equalty. Two containers are equal if their IDs and their container sets are equal.\end{defn}
-\begin{rem}This means that containership of sets is not closed under pairwise union: $\{a\}\cup\{\{a\},\{b\}\}$ is not a container.\end{rem}
-\begin{rem}Containers are mutable, and have a persistent ID. The vast majority of operations on containers -- apart from identity -- however, are done according to their sets.\end{rem}
-\begin{defn}[Reference]We lift the term \emph{reference} from computer science,\footnote{We may not even be lifting it, we're formalizing an organization and access system for a website and from other points of view this is just the reality of our project peeking through.} and will use the symbol $'$ to distinguish a container, $\{a\}$, and a reference to that container, $\{a\}'$. When we need to dis-ambiguate two references to the same thing we will use subscripts: $\{a\}_1'$ and $\{a\}_2'$. We will try to avoid needing it, but we will follow a reference to its \emph{referent} with the function $\mathrm{deref}(\{a\}')=\{a\}$.\end{defn}
+\begin{defn}A space repo record describing a container set, extensionally or intesionally, is a \emph{container}.\end{defn}
+\begin{rem}Nothing stops two containers from describing the same container set -- not even in the same space repo! A user may have a ``best of'' recommendation list of their own work with one item (a one-shot), and also a canonical publication site of that one-shot. Although sets have well-foundedness for free, app-views must enforce that containers describe well-founded sets.\end{rem}
+\begin{rem}Although this sketch allows both intensional and extensional definitions, only the ability to describe container sets extensionally is required of implemeneters. Implemeneters \emph{may} also allow intensional descriptions (e.g., to support ``here is a recommendation list driven by a query of the archive'') but there is no requirement that they do. Implementers may choose to impose additional constraints on what sets may be described intensionally.\end{rem}
+\begin{rem}An atom is not a container, and all interaction with work contents in atoms should be through their singleton container. Implementors \emph{must} enforce uniqueness of singleton containers across the space: e.g., by ignoring references to atoms from containers apart from a singleton on the same space repo, by refusing to surface duplicate singletons in the app view, or by allowing singleton containers to be implicitly defined by the atom itself.\end{rem}
 
-\begin{defn}[Boundary]Call a set of references to containers a \emph{boundary}. and then recursively broaden the term to admit sets whose elements are references to containers or references to other boundaries, provided they are well-founded (i.e., no boundary may transitively contain a reference which refers to the boundary).\end{defn}
-\begin{rem}Whether boundaries and containers differ in practical implementation is left as an open question. In vocabulary, however, we will aim to assign them different roles. Containers manage the ownership of a work and the de-duplication of search results in certain hot paths; boundaries manage the description of fannish interactions. Both are elaborated below.\end{rem}
+\begin{defn}[Endorsed \& canonical references]Every space repo which hosts a container may also \emph{endorse} the inclusion of the hosted container in other containers by publishing that endorsement as a separate record. For each container hosted in a space repo, the same space repo may publish up to one \emph{canonical} inclusion of the container designating the container's most proper home.\end{defn}
+\begin{rem}If one container on a space repo lists another container on the same space repo, it should \emph{likely} be read as an implicitly endorsed containment relation of their repsective described sets, but that conclusion is ultimatley up to the choice of app-view.\end{rem}
+\begin{rem}Spurrious endorsements -- records in space repos endorsing inclusion of containers not hosted in those space repos, for example; or multiple canonical inclusions for the same container from one space repo -- must not be honored by an app-view.\end{rem}
 
-Finally the good part:
-\begin{defn}[Reading sequence] a \emph{reading sequence} is a boundary equipped with a directed graph $G$ on its elements, describing the order it should be read in. We call its members \emph{steps}.
-We require that:\begin{enumerate}
- \item There is a designated \emph{start} step $s_0$ from which every step in $G$ is reachable.
- \item Every step has out-degree at most $1$.
-\end{enumerate}
-An \emph{end} of a reading sequence is either a step with no outgoing edges, or a cycle taken as a whole.
-\end{defn}
+\begin{defn}[Reading sequence] a \emph{reading sequence} is map from the natural numbers (or an initial segment of them) into a container. We call the ordered pairs defining the map its \emph{steps}.
 
-\section{Ownership}
-An atom has one canonical container -- a distinguished set which is treated as its most natural home. Which set is its canonical container is determined by the uploader of the atom. The container in turn may have one canonical container of it, and so on upwards. Only those containers which can trace a complete chain of canonical containment back to an atom appear in the most frequent search results.  
-\section{Interaction}
-Because reading sequences are not tied to specific containers, they are free to propose alternate interpretations a single canonical work (\emph{e.g.}, a reading guide that sends the reader back to re-read an earlier chapter), put parts of separate works in dialogue, or describe a shared chronology across disparate works. Boundaries, likewise, can be used by fans to describe non-sequential relations on fiction: a list of favorites, a thematically grouped set of recommendations, etc. 
+The \emph{end} of a reading sequence is the ordered pair corresponding to the greatest element in its domain or, if no greatest element exists, the whole of the sequence.
+\begin{defn}The record describing a reading sequence we call a \emph{reading sequence record}. A reading sequence record may define a reading sequene extensionally or intensionally.\end{defn}
 
-Each implementing AppView is responsible for providing means of navigation along a sequence. When a given step refers to a container which is not a singleton, the AppView is -- if the reading sequence has not specified what to do -- responsible for iterating over the the contents of the container before marking the step complete and proceding to the next step. Containers may or may not contain hints that help the AppView choose a useful ``default'' navigation order. 
-%Tension: we want reading sequences to be composable, "Read Book A in its natural sequence, then read Book B in its natural sequence" requring steps be references to sequences is a challenge here. 
-The use of references means that reachability and viewability may be separate questions: a reference to a deleted work leads to an error page, but an easy path to continuing in the sequence. 
+\begin{rem}Implementers may choose to allow reading sequences to compose, but our specification treats only maps over containers. If implementers choose to allow composition, they should ensure that reading sequence records are well-founded in the same way that they ensure containers are (e.g., Sequence A should not list Sequence B as a step if Sequence B lists Sequence A as a step).\end{rem}
 
-\section{Permissions}
-An author's control of who may read, remix, or republish a work is exercised by setting policies as to who may reference their atoms.\footnote{This is an acknowledged source of tension with the permissioned data proposal for the AT Protocol (\texttt{https://github.com/bluesky-social/proposals/tree/main/0016-permissioned-data}), where permissioned spaces govern who may read data, but do not and cannot set boundaries as to who may write data. Because the organizing model of the AT Protocol is Personal Data Servers, whose owner may have any record written to them, permission to refer to a work here must be enforced at the AppView layer, even against PDS records purporting to refer to works they should not be able to reference. The proposal is still evolving, so this analysis is developed against a moving target; that is acceptable while the design is in the ideation phase, but the comparison should be rechecked against the current text before anything is finalized.} Republishing permissions narrow across  republications. For example, all the authors of a zine may grant permission to the zine's curator to reference the atoms submitted, and the zine may be published as a work (containing references to each atom), but the permissions as to who may refernce the zine are -- in the most permissive case -- bounded by the intersection of permission policies for each atom.
+\begin{rem}As with containment, a space repo may endorse multiple sequences over one of its own container, and designate at most one sequence over that container as canonical.\end{rem}
 
-\subsection*{Nesting} A reading sequence may contain other sequences, or may contain un-ordered boundaries: a reading sequence containing chapters $a, \{b,c\}, d$ in that order expresses ``read $a$, then read $b$ and $c$ in either order, then read $d$.'' Indifference about order is therefore expressed by nesting an unordered boundary. How a reading sequence traverses $b$ and $c$ where there is no defined opinion is left as a detail up to the implementer.
+\begin{rem}A container with no endorsed sequences is one which, by default, expresses no opinion on the order to read its children.\end{rem}
+\section{Ownership \& Permissions} Ownership of any given container or sequence record is fully decided by what space repo it lives in. The owner of the PDS hosting the space repo is the owner. 
+
+A user may attach instructions to a container -- ``show this only to my friends, users 1, 2 and 3.'' -- and app-views must honor these requests, but unless the app-view is the only means of gaining read access to the space, there is no way to prevent others from reading the container directly, bypassing the app-view as an intermediary.
+
+\section{Search and Presentation}
+Tags roll up across the inclusion relation for all container sets, even when the inclusion relation is not endorsed for the containers in question.
+
+App-views should support two modalities for presentation, which we will call focused and broad presentation. This document describes how each mode of presentation must work, and requires app views to support both, but makes no prescriptions on when app views should use which. This document offers non-normative guidance that focused search was meant for hot-path feeds, \emph{e.g.} ``latest works in fandom X.'' amd broad search was meant for wide-ranging queries ``show me everything of what this author has worked on.''
+
+%% In focused modality
+%Motivation: app-views should make efforts to de-duplicate search results where multiple works match due to containment of the same atom.
+\subsection{Focused Presentation}
+App-views should produce search results which consist exclusively of containers who have a chain of canonical-containment relations to at least one singleton container. Of these works, app-views should present their canonical reading sequences, or the container itself if no such canonical sequence exists. This also restricts how tag search must work. Positive matches: show me tags matching X should only trace canonical paths (at least on any search where we care about de-duplication). Negative matches ``don't show me Y'' should match unconditionally. 
+
+\subsection{Broad Presentation}
+Search matches in broad presentation work much closer to a naive expectation: any container with matching tags is presented. 
+
+In either search modality, if \emph{any} record, canonical or no, in a container should not be shown to a user the whole of the container should not be shown to that user by a compliant app-view.\footnote{The same caveat about visibility in spaces accessed outside app-views we have made repeatedly applies here again.}
+
+\subsection{Granularity}
+For both classes of search presentation, app-views should support two modes of user-preference regarding the granularity at which works are presented. Users may specify granularity preferences in terms of named work types, or by an intrinsically assigned work depth.  
+
+\subsubsection{Depth}
+The empty conatiner set is assigned depth zero, and we inductively define the depth of a container set as one greater than the depth of the deepest container set included in it. Users request a depth $d$ alongside the rest of their search and in focused searches app-views present matched results organized into the canonical container with greatest depth not exceeding $d$.
+
+\subsubsection{Work Type}
+Users may optionally provide a \texttt{workType} hint field on a container labelled for publication to indicate their intent (e.g., this is a chapter, this is a multi-book series). The precise values of the proposed field are not defined, but are assumed to be totally ordered in granularity. 
+
+Behavior when a user requests filtering by work type and depth at once is undefined. 
+
+
+\section{Metadata}
+Each container contains fields for preferatory remarks (an author's note to a chapter, an author's note to a fic) and concluding remarks (a second author's note to appear at the end of a chapter, etc.) Authorial notes interspersed elsewhere in the work are discouraged. Each container holds timestamps for its creation and its last edit. Edits to containers do not change the last edited date of PDS records that include them.
 
 \section{Navigation}
-A user navigates a given sequence which is preserved in each view. That is, between URL params, cookies, or some other means, there is persisted knowledge that ``I am reading Chapter 3 of \emph{The Two Towers}, the second book of \emph{The Lord of the Rings}'' as distinguished from merely ``I am reading Chapter 3 of \emph{The Two Towers}'' or ``I am reading Chapter 3,'' When the user reaches the end of a given sub-sequence they are presented with a ``Next in (sequence name here)'' navigational box. Note that, in the cyclic cases, a single node may have both ``Next in (sub-sequence)'' and ``Next in (broader sequence)'' labels. This model refuses choice -- there is a single ``next'' direction for any level of reading sequence. A Choose Your Own Adventure model is out of scope (but could in future be composed out of multiple reading sequences over a non-disjoint set of boundaries).
-
-\section{Presentation and Defaults}
-Author commentary and errata have modest support in this model. All containers are allowed two special textual nodes ``preferatory remarks'' and ``concluding remarks'' for an author or editor to add commentary about a reading sequence, but which are not necessarily part of the work proper.\footnote{Note that the nesting structure of chapter singletons, along-side a novel-length reading sequence of chapters, make the introduction and afterword of a novel the prefaratory/conclusory remarks of a container, and the author notes of each chapter preferatory remarks to smaller boundaries contained in the novel.} %Open problem: What does this do to set equality comparisons? Deferred until we have use cases. 
-Containers also exist as places to hang publication metadata: The identity of a publisher and their role (author of a work, fan-curator of a reclist, editor of a zine, etc.) attach to the boundary.  Tags and warnings, likewise, attach at the boundary layer, as do work summaries. Notions such as ``last updated'' are shared between boundary (were works added/removed, metadata such as summary modified) and constituent atoms (last date of chnaged to underlying content)
-
-The granularity of presentation of works, however, is delegated to user preferences. A container with only a single atom of text is of depth $1$, a typical novel containing singletons of several sequential atoms is of depth $2$, a series of works containing novels is of depth $3$, etc. In mixed cases of novels, series, atoms, etc. a boundary is of depth one greater than its most-nested element. Boundaries, in addition to raw depth, admit a semantic hint about their size as publication metadata (``this is a chapter-sized work''). Users specify both their preferred depth $d$ and prefered semantic hints to see how grouped or un-grouped works should be in their search and display views. AppViews are strongly recommended to honor semantic hints -- ``according to the author, this is a chapter-sized work'' -- first, and use information about a boundary's depth only in the absence of hints, or in extreme cases (``This work says it is a small chapter, but it nests 30 deep, so we decide to present it as a larger sequence.''). 
-
-
-% Further tie-breaking in the absence of a designated canonical publication boundary to be fleshed out here. 
-
-Tags attached to works roll-up boundaries, but are a view computed per reader: not every reader will necessarily have acess to every chapter in a work, and what they cannot read by the same token cannot roll-up.\footnote{There are weak and strong versions of this case: in the weak version, a publication boundary is only visible if all its members are visible to a reader and the exercise is moot. In the highly granular, strong, version, this computation must be done at search time.} A multi-fandom anthology inherits the fandom tags of all its entries, as well as their trigger warnings, etc. Tags do not roll down, ever.
-%Big list of problem cases to be fleshed out as well
 \end{document}
