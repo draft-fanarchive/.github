@@ -5,5 +5,5 @@ But even if the point of this project is purely educational, I still want to giv
 
 If you see a bug or have a suggestion, please feel free to open an issue in the appropriate repository. Currently, this project is spread across
 - **draft-fanarchive/.github**, this repository, used to maintain the github page, and to track issues that affect multiple other repositories. If you have a high-level feature request, this is the place to open it. 
-- **[draft-fanarchive/schemata](https://github.com/grao3/schemata)**, Defines the types and queries in the archive's API.
+- **[draft-fanarchive/schemata](https://github.com/draft-fanarchive/schemata)**, Defines AT Proto schemata for fanworks and feedback, as well as the types and queries in the archive's API.
 
