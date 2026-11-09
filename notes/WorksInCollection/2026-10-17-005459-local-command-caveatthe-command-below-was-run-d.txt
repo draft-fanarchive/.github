@@ -1,0 +1,273 @@
+▗ ▗   ▖ ▖  Claude Code v2.1.299
+           Opus 5.5 · Claude Pro
+ ▘▘   ▝▝   ~/code/draft-fanarchive/.github/notes/WorksInCollection
+
+
+❯ /clear                                                                        
+
+❯ Within the notes at .github/notes/WorksInCollection I bat around a few ideas  
+  for how to model reading sequences as distinct from the documents they touch  
+  on. At present I've deliberately refused 'choose your own adventure' type     
+  stories as part of what sequences model. This also rules out the Discworld    
+  Flowchart. What's the minimum I would need to model CYOA, Discworld           
+  flowcharts, and Rayuela in terms of a descriptive grammar. My intuition is I  
+  need something more than regex on strings to describe it (i.e., not all these 
+  sequences can be expressed as a regex pattern on an alphabet of works)        
+
+  Ran 4 shell commands (ctrl+o to expand)
+
+⏺ Short answer: your intuition holds, but not for the reason you gave. On
+  expressive power, all three fit inside the regular languages. A regex over an
+  alphabet of works falls short for two other reasons: it loses the reader's
+  choice points, and it cannot describe "any order" compactly. The minimum you
+  need is two kinds of sequence (a choice graph and a partial order) plus the
+  nesting you already have.
+
+  Where each example sits
+
+  Work: Rayuela
+  Natural shape: One finite list, plus one list ending in a cycle
+  Language class over works: Regular. The loop makes it an infinite reading, but
+
+  a trivial one. Your current Sequence (steps + loopTo) already handles it.
+  ────────────────────────────────────────
+  Work: CYOA
+  Natural shape: Chapters linked by choices, with loops
+  Language class over works: Regular. If each chapter is its own state, it's the
+
+  set of paths through a graph, which is a narrower class than regular. If the
+  story tracks state (inventory, "if you've visited the castle"), it's still
+  regular, because the state is finite.
+  ────────────────────────────────────────
+  Work: Discworld chart
+  Natural shape: Sub-series chains with crossover arrows, read in any order the
+  arrows allow
+  Language class over works: Finite, so trivially regular. But a regex for it is
+
+  enormous (see below).
+
+  You only get past regular with unbounded recursive nesting: side-quests that
+  must return "to where you were" and can contain further side-quests. That is
+  context-free. Your acyclicity invariant on nested sequences already rules this
+  out, and real books bound the depth anyway.
+
+  Why regex is still the wrong tool
+
+  1. It loses choice points. The expressions ab | ac and a(b|c) describe the
+  same set of readings, but they are different CYOA books. In the first, the
+  reader commits before reading a. In the second, they choose after reading it.
+  What the reader experiences is the branching structure, not the set of
+  possible readings. So you need a transition system, not a language. Your step
+  identity already gives you most of this. Steps are separate from their
+  targets, so two steps can both target chapter a but offer different choices
+  next. That is exactly the step from "paths in a graph" to a general automaton.
+
+  2. It can't express "any order" compactly. The Discworld chart is a partial
+  order, and its readings are its linear orderings. You could also allow
+  readings of just its prefixes, if a reader may stop after the Witches books. A
+  plain regex or automaton has to list every interleaving:
+  - Take k independent chains of length n. The automaton needs roughly (n+1)^k
+    states, one for each combination of positions across the chains.
+  - For Discworld's sub-series plus its standalones, that's very roughly tens of
+    thousands to millions of states. That's a back-of-envelope estimate, not a
+    count.
+  - Adding a shuffle operator (∥) to regex keeps you within regular but shrinks
+    the description exponentially.
+
+  Even shuffle plus nesting only gives you series-parallel orders. Those can't
+  express an N-shaped crossover: a→c, b→c, b→d, but not a→d. I believe the chart
+  has crossovers like that, though I haven't checked it arrow by arrow. If it
+  does, nested unordered groups won't capture it, and you need explicit
+  prerequisite edges.
+
+  3. The two kinds of edge mean different things. A CYOA edge is an OR: after A,
+  read B or C. A Discworld edge is an AND: reading A unlocks B and C, and you
+  may read both. A single edge type can't carry both meanings.
+
+  Minimum model
+
+  Using the types in GroupsAndSequences.tex:
+
+  type Flow  { steps: [Step], start: [Step], next: Step -> [Step], ends: [Step] 
+  }  # reader picks one successor
+  type Order { steps: [Step], before: [(Step, Step)] }                          
+     # acyclic; any compatible order
+  Step.target: Atom | Group | Flow | Order                                      
+     # nesting, still acyclic
+
+  - Your current Sequence is a special case of Flow: at most one next step each,
+    with loopTo as a back-edge. Existing data carries over unchanged.
+  - Rayuela: either one Flow with two entry steps, or two Flows over one group,
+    as you have now.
+  - CYOA: a Flow whose steps have several next steps and include cycles. Finite
+    state like inventory gets encoded as distinct steps targeting the same atom.
+    The cost is a bigger graph, not a new primitive. Explicit guards ("if you
+    have the key") would only make it more compact.
+  - Discworld: an Order whose steps target each sub-series, or one big Order
+    over the books with the crossover edges.
+  - Narnia ("Prince Caspian, then three in any order, then the rest"): a list
+    whose middle step targets an Order with no edges. This removes the need,
+    noted in the Revisited note, to mint a new container just for the three
+    books.
+
+  You don't need infinite-reading acceptance conditions (ω-automata). The
+  AppView never decides whether a reading is valid. It only answers "from here,
+  what may I read next?", and a finite graph with marked endings answers that.
+
+  What this leaves out is anything mixing choice and concurrency, such as a
+  choice in one sub-series that changes what another unlocks. That needs a
+  Petri-net or event-structure model. None of your three examples requires it,
+  so I'd leave it as an open question rather than build for it.
+
+  I can draft this as a section in ReadingSequencesRevisted.tex, or as a
+  replacement for the "Branching and optional steps" open question in
+  GroupsAndSequences.tex.
+
+✻ Sautéed for 1m 48s · done Friday 10:46 PM
+
+❯ So the types with functions -- I am presuming that's what next: Step ->       
+  [Step] is -- are very appealing. But at the end of the day someone has to     
+  write a concrete record on a space repo somewhere for this. And terseness of  
+  notation there is highly desireable. I guess what I'm actually asking is --   
+  assuming our cycles and DAGs with both "AND" edges and "OR" edges -- how can  
+  we best represent these? The move to petri nets for instance may be           
+  desireable if there is some cool representation theorem about their bipartite 
+  graphs. (Just an example, I do not know if such a cool theorem exists, and    
+  am not committed to petri nets)                                               
+
+⏺ Short answer: don't store Petri nets. There is a useful theorem behind your
+  hunch, but the result that best suits a terse record is a different one: the
+  Refined Process Structure Tree. It says a flow graph breaks down, uniquely,
+  into a tree of nested blocks. That suggests storing a tree of blocks: plain
+  sequence, AND and OR blocks for the common cases, and an explicit graph only
+  for the leftover parts that don't break down. Petri nets then become the
+  meaning an AppView uses to check records, not the format anyone writes.
+
+  The theorems that exist
+
+  Petri nets. The good theory covers free-choice nets. In these, whenever two
+  transitions compete for a place, nothing else can enable one without the
+  other. That restriction fits reading works: a choice depends only on where you
+  are. Two results matter:
+
+  - Hack's covering theorems (1972). Every well-behaved free-choice net is
+    covered by:
+    - state machines: every transition has one input and one output, so they are
+      pure OR, i.e. automata, i.e. your Flow;
+    - marked graphs: every place has one input and one output, so they are pure
+      AND, i.e. partial orders, i.e. your Order.
+
+    So, roughly, every sane mix of AND and OR is an overlay of Flows and Orders.
+    The catch is that the covering pieces overlap and aren't nested. That makes
+    it a theorem for checking structures, not for storing them.
+  - Favre, Fahland and Völzer (2015). Graphs with only AND and XOR (exclusive
+    OR) gateways correspond to free-choice workflow nets. Node-and-edge graphs
+    with gateways are therefore already as expressive as the useful Petri nets,
+    without making you store places explicitly. Explicit places roughly double
+    what gets written, and they force authors to think in tokens.
+
+  The Refined Process Structure Tree (Vanhatalo, Völzer and Koehler, 2008–09).
+  It is built on Hopcroft–Tarjan triconnected components and SPQR trees:
+
+  - Any flow graph with one start and one end, cycles included, has a unique
+    tree of single-entry, single-exit fragments.
+  - Each fragment is one of four kinds:
+    - trivial: one edge;
+    - polygon: a sequence;
+    - bond: parallel branches, either AND or XOR, including loops;
+    - rigid: an irreducible tangle, such as N-shaped crossovers or a messy CYOA
+      graph.
+  - The tree can be computed in linear time.
+
+  This result suits storage. It says nested blocks plus an explicit-graph
+  fallback for rigid pieces covers every case, and that each graph has exactly
+  one such form. An AppView could even convert a submitted graph to that form.
+
+  Proposed record shape
+
+  One record per sequence. Each step has a local key that maps to a target. Step
+  identity therefore survives edits, the same target can appear twice, and each
+  long AT-URI is written only once.
+
+  {
+    "steps": { "pc": "at://…/caspian", "vdt": "at://…", "sc": "at://…", "mn":
+  "at://…", "lb": "…", "lww": "…", "hhb": "…" },
+    "body": ["pc", {"and": ["vdt", "sc", "mn"]}, "lb", "lww", "hhb"]
+  }
+
+  The block vocabulary:
+
+  ┌───────────────────────┬──────────────────────────────────┬──────────────┐
+  │         Form          │             Meaning              │ Kind in the  │
+  │                       │                                  │     tree     │
+  ├───────────────────────┼──────────────────────────────────┼──────────────┤
+  │ "key"                 │ read this step                   │ trivial      │
+  ├───────────────────────┼──────────────────────────────────┼──────────────┤
+  │ [a, b, …]             │ in order                         │ polygon      │
+  ├───────────────────────┼──────────────────────────────────┼──────────────┤
+  │ {"and": [...]}        │ all of them, any interleaving    │ AND bond     │
+  ├───────────────────────┼──────────────────────────────────┼──────────────┤
+  │ {"or": [...]}         │ the reader picks one             │ XOR bond     │
+  ├───────────────────────┼──────────────────────────────────┼──────────────┤
+  │ {"loop": [...]}       │ repeat forever (terminal)        │ loop bond    │
+  ├───────────────────────┼──────────────────────────────────┼──────────────┤
+  │ {"flow": {start,      │ explicit choice graph, cycles    │ rigid, pure  │
+  │ next, end}}           │ allowed                          │ OR           │
+  ├───────────────────────┼──────────────────────────────────┼──────────────┤
+  │ {"order": {before}}   │ explicit prerequisite graph,     │ rigid, pure  │
+  │                       │ must be acyclic                  │ AND          │
+  └───────────────────────┴──────────────────────────────────┴──────────────┘
+
+  Blocks nest anywhere, including as nodes inside flow and order. A nested node
+  means "read this whole block, then continue." Applied to the examples:
+
+  - Rayuela, order 2: ["c73", "c1", "c2", "c116", …, {"loop": ["c58", "c131"]}]
+  - Narnia variant: shown above. Seven short keys.
+  - CYOA: a flow. The adjacency list {"p1": ["p4", "p9"], "p9": ["p1", "end2"], 
+    …} writes each edge once. That is the minimum for an automaton, and CYOA
+    graphs really are rigid.
+  - Discworld: if the sub-series stay independent, {"and": [[witches…], 
+    [watch…], …]}. If crossovers create N-shapes, which I expect but haven't
+    checked, use an order with the crossover edges, about 40 nodes and 50 edges.
+    The sub-series chains can be inner [...] nodes to keep it short.
+
+  The one rule that keeps this safe
+
+  Rigid fragments must be pure: all OR (flow) or all AND (order). Mixing happens
+  only through nesting.
+
+  The reason is deadlock. Suppose a choice says "read ending A or B," and a
+  later book requires both. Its AND-join can never fire, and the reader is
+  stranded. The safe cases:
+
+  - Properly nested blocks can't deadlock; they are sound by construction.
+  - A pure flow can't deadlock. It can only have unreachable endings, which a
+    reachability check catches.
+  - A pure acyclic order can't deadlock.
+
+  Only mixed rigid graphs need a real soundness check. That check is polynomial
+  for free-choice nets, but it isn't something every AppView should have to
+  implement.
+
+  What the purity rule gives up is a rigid tangle where a choice in one strand
+  changes what unlocks in another. That is the same case I suggested leaving out
+  last time. If you ever need it, the extension is gateway steps with no target
+  and explicit and/xor types, validated by translating to a free-choice net.
+  The format grows without breaking.
+
+  Two smaller decisions
+
+  - "May stop anywhere" fits better as a flag on the sequence (accept prefixes)
+    than as encoded skips. Readers dropping out of a sub-series is normal, not
+    part of the structure. Genuinely optional steps can be {"or": ["x", []]},
+    where the empty sequence means "skip."
+  - A string mini-language like "pc (vdt & sc & mn) lb lww hhb" would be shorter
+    still, but it needs a parser, and Lexicon schemas can't validate it.
+    Lexicon does allow recursive unions (feed thread views nest that way), so
+    the structured form is expressible. Check record-size and nesting-depth
+    limits before relying on deep trees.
+
+  I can write this up for ReadingSequencesRevisted.tex, with the soundness
+  argument and the Narnia, Rayuela, CYOA and Discworld examples worked through.
+
+✻ Cooked for 1m 29s · done Friday 10:59 PM

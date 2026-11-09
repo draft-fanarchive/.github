@@ -1,0 +1,86 @@
+% Use cases to test the revised (two-tier) definition of readings and reading sequences against. Scenarios only, no proposed fixes.
+\documentclass{amsart}
+\usepackage{hyperref}
+\usepackage{amssymb}
+\usepackage{enumitem}
+\newlist{todo}{itemize}{2}
+\setlist[todo]{label=$\square$}
+\title{Reading Sequences: Use Cases to Think About}
+\begin{document}
+\maketitle
+\begin{abstract}
+An itinerary of scenarios, mostly involving mutable data, against which to check the two-tier definition of readings (tier~1, over a container) and reading sequences (tier~2, sequences of container--reading pairs), together with the stratification rule that a container's canonical reading must be a tier-1 reading over that container.
+\end{abstract}
+
+\section{Promoting a reading to canonical}
+\begin{todo}
+\item Alice wants to make Bob's tier-2 sequence of her series her canonical reading. Bob's sequence uses a helper container $X=\{DT,SC,MN\}$ that he minted for an ``any order'' step.
+\item Alice tries to re-express Bob's sequence as a tier-1 reading. To get ``any order'' over three of her children, she needs $X$, or her own copy of it, among her children.
+\item Alice adds $X$ as a child of her container. Those three books are now in it twice, once directly and once through $X$. What happens to her natural and trivial readings, and to the canonical containment chains of those books?
+\item Alice wants an interleaved canonical reading: book~1 ch.~1--5, then book~2, then book~1 ch.~6--10.
+\end{todo}
+
+\section{Adding and removing children}
+\begin{todo}
+\item Alice has a custom canonical reading and posts chapter~12. The reading doesn't mention the new chapter.
+\item Alice adds a child and updates the canonical reading in two separate writes. What do readers see between the two writes, or if she forgets the second?
+\item Same as above, but the new child lives in someone else's space repo.
+\item Alice removes chapter~7. Her canonical reading still references $c_7$, and so do tier-1 readings over $A$ written by other people.
+\item Alice's canonical reading becomes invalid. What do readers get instead?
+\item Alice reorders her container's children for display reasons. Every sequence that cites ``natural reading of $A$'' changes.
+\end{todo}
+
+\section{Edits that disqualify a canonical reading}
+\begin{todo}
+\item Alice edits her canonical reading of $A$ to add a step over a container that isn't one of $A$'s children, such as a sibling or Bob's helper container. It may still be a reading of $A$ by atoms, but it is now shaped like a tier-2 sequence and can't be canonical.
+\item Alice edits her canonical reading of $A$ to add the step ``read $A$ canonically''.
+\item One reading record is $A$'s canonical reading and is also cited as a step in other people's tier-2 sequences. An edit that is fine for those tier-2 uses disqualifies it as canonical. Does the edit break one use and not the other?
+\item Alice designates a tier-1 reading Bob wrote over $A$ as her canonical reading. Bob later edits it so it no longer qualifies.
+\item A reading is re-pointed or re-created against another container record that describes the same set as $A$. It is no longer a reading over $A$.
+\item An edit leaves the canonical reading valid but changes its character: it becomes infinite, or stops reading some children.
+\end{todo}
+
+\section{Attribution moves without anyone touching the reading}
+\begin{todo}
+\item Alice moves chapter~7 into a ``Deleted scenes'' container $D$ outside $B$. Fan sequences that touch ch.~7 are no longer readings of $B$.
+\item Alice folds a standalone one-shot into $B$ as a bonus chapter. Where do existing readings of the one-shot now surface?
+\item The reverse: Alice pulls a chapter out of $B$ and publishes it as a standalone. Where do its readings surface?
+\item Alice splits chapter~3 into 3a and 3b, deleting the old atom. Every reference to $\{c_3\}$ dangles.
+\item Alice merges two chapters into one atom.
+\end{todo}
+
+\section{Revisions and moves}
+\begin{todo}
+\item Alice revises a chapter: a typo fix, or a substantial rewrite.
+\item Bob's tier-2 sequence reads Alice's ch.~3, then his missing scene. Alice rewrites ch.~3 so the missing scene no longer makes sense.
+\item Alice drafts a fic in a private beta-reader Space and builds its canonical reading there. She then publishes it to the public archive Space.\footnote{A record's URI includes its Space: \nolinkurl{at://{spaceDid}/space/{spaceType}/{skey}/{authorDid}/{collection}/{rkey}}. See \url{https://github.com/bluesky-social/proposals/tree/main/0016-permissioned-data}.}
+\end{todo}
+
+\section{Changes made by other people}
+\begin{todo}
+\item Alice's anthology reading reads Bob's story by its canonical reading. Bob adds an epilogue Alice never curated.
+\item Bob changes his story's canonical reading to an infinite terminal loop. The steps after it in Alice's anthology reading, and in tier-2 sequences that read the anthology, can no longer be reached.
+\item Alice adds $B$ to $A$ while Bob, at the same time, adds $A$ to $B$. Each edit is fine on its own, but together they make a containment cycle.
+\item Two app-views see those two edits in different orders.
+\end{todo}
+
+\section{Deletion, moderation and access}
+\begin{todo}
+\item Bob deletes his story from Alice's anthology. Alice isn't notified, and readings over the anthology break.
+\item Bob's story is taken down by moderation. Alice's whole anthology, and every sequence touching it, is hidden.
+\item A reader blocks Bob. Is Alice's anthology hidden for that reader?
+\item Bob is removed from the Space's writer set.
+\item Bob deletes or blocks on purpose to grief Alice's anthology.
+\item Bob's sequence uses Alice's alternate ``chronological'' reading $R$, and Alice deletes $R$.
+\end{todo}
+
+\section{Reader state}
+\begin{todo}
+\item A reader is at step $n$ of a reading, and a step is inserted before $n$.
+\item Alice changes her canonical reading while a reader is halfway through it. What does ``next chapter'' mean?
+\item ``Next unread'' in a reading where atoms repeat, as in \emph{Rayuela} or loops.
+\item A reader is partway through a trivial (``any order'') reading. The app must remember the order they actually took.
+\item That reader's trivial reading gains or loses children mid-read.
+\end{todo}
+
+\end{document}

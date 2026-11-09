@@ -1,0 +1,42 @@
+A meditation on our ``stop minting containers'' goal -- why? There are a few reasons
+ - We don't want to have a million records on a million space repos every time someone wants to describe the same thing.
+   - but why do we want that? Simplicity of management, but does that press against everyone owning their own data, yeah kinda. More to the point is an inline enumeration of atoms _that_ much more efficient? 
+ - It messes a little with directly using our containment architecture, container-set descriptions of the same underlying atoms are not unique. But I don't think we're actually making headway against that either allowing direct referne of atoms either. We've just moved the problem to a new presentation style.  
+
+
+
+Final decisions for now:
+N-Free assumed of all reading sequences
+resolver definitely for future expansion, potentially leveraging edge enumeration rather than an endpoint which tells you where next.
+
+Brief bullet-point pre-TeX brainstorm:
+Current draft: 
+- Makes canonical containment a relation among containers, from which we get the deduplication in focused search (find only canonical containers marked for publication)
+- Makes a reading sequence a function over a container, implicitly asking fans who want to propose a different sequence to mint a new container for cases outside strict linear re-ordrer (e.g., one container whose children are the seven narnia books may have two orders and two reading sequences, but if a fan wants to express ``Reading Prince Caspian, then any of these three in any order (Dawn Treader, Silver Chair, Nephew), then Battle, Wardrobe, Horse in that order'' they need at least a container around the three in parenthesis.)
+- Fan's newly minted container will be non-canonical and not show in search results, but leaves open the problem: this is in a real sense a reading sequence over the original work, but we cannot find it because it is implemented over a distinct container than the canonical one.
+
+Want to take existing implementation and 
+- Preserve canonical ascent tree idea, because that does seem to be working
+- Redefine reading sequences so that one container may admit multiple sequences, and also we have a clean sense of cases where sequences over fan containerizations of the original story are easily assoicated back the the origina container/sequence. 
+- Accomodate some latitude for choices in reading sequence. 
+
+One place where the objective itself is unclear: 
+It is not completely obvious whether a clean principle exists separating use cases that intuitively feel like they should be supported (partial ordering of narnia above, a Rashomon-esque story where you can read the same start and end of the sequence but see one of three different perspectives) and what seems plainly out of scope (A choose your own adventure, the Discworld graph) both allow disjuncts but a notion of choice in the latter group seems to be a unifying theme of ``we're not doing that.''
+
+Buuuut someday we may want to: so whatever solution we come up with should allow for furture extension to describing a choice function over our representation of disjuncts, an obvious place to express ``Pick A, Pick B'' and get a destination as an output. This could open up server-driven CYOA but that seems like a mistake, since that should be expressible as an edge network or just hyperlinks between works. The real appeal is in things like ``Calls a server at URI X, Server responds with Work A on Tuesdays, B other days.'' Deterministic, dynamic behavior. All of which is out of scope, but any solution should _feel_ extendable to these cases.  
+
+Start of a new idea:
+- Every container has two inbuilt reading sequences. The natural sequence which is ``Read each of the container's children once, in the order the container enumerates them''\footnote{systems which expand to intensional set definitions must support an intensionally defined natural sequence over the container.} and the trivial sequence which is ``read each of the container's children once in no particular order.'' Saying two is somewhat strained since on singletons these are the same sequence.
+- For these bullet points, let capital letters stand in for a reading of a container -- that is a container paired with a specific reading sequence over that container. 
+- Define primitives Any(A,B,..,C) and All(A,B,..,C) which express ``Read exactly one, any one, of A, B or C'' and ``Read all of A, B, and C in any order.'' ve from a reading sequence being a function from \mathbb{N} to a container to a function from N (or an initial segment) to 
+- A Reading Sequence is A function from \mathbb{N} to [{A,...,Z} and also any object you can assemble by supplying A...Z as arguments to All or Any].
+- We'll likely need a more compact way to represent these in actual records on an actual PDS/Space Repo (e.g., a Loop() for infinite cases) but conceptually this is what we're going for (I think)
+- Someone has probably already invented a better formulation of this.
+- A Reading Sequence is a reading of multiple containers, in particular for a container b, if you extract the atoms out of the reading sequence's image, and they are a subset of the atoms of b, a reading sequence is a reading of b.
+- Keeping out publication/containment machinery in place, we show a reading sequence in search results for the least (under containment chains) publishable containers for which it is a reading. So, e.g., if a reading is a reading of the illiad it is implicitly also a reading of Works of Homer, but we only display for illiad -- assuming both have been marked for publication.
+
+In other words, the success criteria for a new definition of reading sequences is: 
+- It is easy to attribute a reading sequence to a container, even if the steps of that sequence refer to collections not in the container. More specifically, say a container is {{a},{b},{c}} and a
+  (pre-brainstorm defn) sequence needs {{a},{{b},{c}}} the bookkeeping container around {b} and {c} should not matter for whether the reading sequence can be tied back to the canonical version {{a},{b},{c}}.
+- Ideally the attribution (Seq_Y over container Y is a non-canonical reading sequence of the container X) falls out naturally from a relation among containers and the sets they describe (i.e., we do not have to resort to a declaration of the relation via additional records)
+- A sequence must be able to express Rayuela (alternate orderings, terminal loops) it is a strong bonus if the sequence may express choice (read either A or B) and more complex flows

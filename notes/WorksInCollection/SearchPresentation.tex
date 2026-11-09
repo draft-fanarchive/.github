@@ -1,0 +1,72 @@
+% Brief for a design session. Self-contained on purpose: the reader has not seen ReadingSequences.tex.
+\documentclass{amsart}
+\usepackage{hyperref}
+\newtheorem*{prob}{Problem}
+\newtheorem{rem}{Remark}
+\theoremstyle{remark}
+\newtheorem{eg}{Example}
+\title{Search Presentation: A Design Brief}
+\begin{document}
+\maketitle
+\begin{abstract}
+The data model of the fanarchive now determines, for any search, which works match and how they relate to one another. It does not determine how a results page should show them. This note describes the presentation problem and the context needed to work on it, for a design session.
+\end{abstract}
+
+\section{Context}
+The fanarchive is a fanfiction archive, in the spirit of AO3, built on the AT Protocol. Works live in users' own data repositories rather than in a central database, and \emph{app-views} (the services that index those repositories and present them to readers) decide how search results look. Any app-view may present results differently; this note asks what a good default looks like.
+
+\subsection{The model in brief}
+\begin{itemize}
+\item An \emph{atom} is a single uploaded document: a one-shot, a chapter.
+\item A \emph{container} groups atoms, or other containers: a novel groups chapters, a series groups novels, a shared continuity groups series, a reader's rec list groups whatever the reader likes. Containers nest and overlap freely, and any number of containers may group the same atoms. A container's \emph{atoms} are all the atoms reachable through it.
+\item A container's owner may designate one container as its \emph{canonical} home (chapter~3 canonically belongs to the novel, the novel to the series). Canonical containment forms a tree going upwards from each atom.
+\item Owners mark some containers \emph{publishable}. Only publishable containers appear in search results. A chapter is usually not publishable; its novel is. Containers built only as scaffolding inside a reading sequence (below) can never be publishable.
+\item A \emph{reading sequence} says how to read some atoms: in order, with choices (``read one of these three''), in any order (``read all of these, in any order''), or with loops (as in Cort\'azar's \emph{Rayuela}). A container may have many reading sequences, at most one of them canonical. Fans may write their own sequences over other people's work.
+\item A sequence is a \emph{reading of} a container when its atoms are among the container's atoms. A sequence surfaces under the most granular publishable container it is a reading of: a fan's reading order for the Narnia books appears under the series, not under ``Works of C.~S.~Lewis.''
+\item Atoms carry \emph{tags} (fandom, characters, relationships, warnings, freeform). Tags roll up: a container carries the tags of everything it contains.
+\end{itemize}
+
+\subsection{Two modes}
+The model asks app-views to support two kinds of results.
+\begin{itemize}
+\item \emph{Focused} results, for hot-path feeds (``latest works in fandom X''): only containers reached by following canonical containment upward from matching atoms, each shown with its canonical reading sequence. One work appears once.
+\item \emph{Broad} results, for wide-ranging queries (``everything this author has worked on'', ``every reading order anyone has made for this series''): any publishable container with a match, along with non-canonical sequences, fan arrangements and rec lists.
+\end{itemize}
+
+\section{The problem}
+\begin{prob}
+Results are driven by atoms and their tags, but readers browse works. The map from atoms to the works presented is many-to-many. How should a results page show it so that one story appears once, at the right size, while the other ways of reading or collecting it stay discoverable without flooding the page?
+\end{prob}
+
+\subsection{Sub-problems}
+\begin{enumerate}
+\item \emph{De-duplication.} One atom can sit in a novel, a series, an anthology reprint, three rec lists and twelve fan reading orders. How does each of these appear, or not, on a results page?
+\item \emph{Granularity.} The default is the most granular publishable container: a tag match on chapter~3 shows the novel. Readers may ask to \emph{fold up} one or more levels: from novel to series, or from series to shared continuity. How is that control presented? Is it per-query, per-result, or both?
+\item \emph{Many readings of one work.} One container may have a canonical sequence and dozens of fan sequences. In broad mode these belong on the page, but how? A count with an expander, a ranked shortlist, a separate tab?
+\item \emph{Fan arrangements.} A fan's container whose atoms all come from one canonical work (``\emph{Prince Caspian}, then the next three in any order, then the rest'') is effectively another reading of that work and could be shown under it. A container that spans many works (a cross-author rec list) belongs to no single work and stands on its own. Are these visibly different kinds of result?
+\item \emph{Tag roll-up noise.} A rec list that includes popular works inherits all of their tags, so it matches every query those works match. Should a rec list show up in broad results for a tag it carries only by inheritance?
+\item \emph{Crossovers.} A work in two fandoms has two homes but only one canonical home. How does it appear when browsing each fandom?
+\end{enumerate}
+
+\section{Constraints}
+\begin{itemize}
+\item If any record in a container is hidden from a reader (blocked author, filtered warning), the whole container is hidden from that reader. Exclusion filters (``don't show me Y'') match on any atom, through any path, not only canonical ones.
+\item Results respect reading permissions. Some works are visible only to some readers, so two readers' result pages for the same query may legitimately differ in what is folded under what.
+\item The model does not choose between focused and broad presentation for any given page. That choice is the designer's.
+\end{itemize}
+
+\section{Examples}
+\begin{eg}[Granularity]
+Chapter $a$ is tagged $x$. Canonically, $a$ is a chapter of novel $A$, $A$ a novel in series $\mathcal{A}$, and $\mathcal{A}$ part of shared continuity $\mathfrak{A}$. The novel, series and continuity are publishable; the chapter is not. A search for $x$ shows $A$ by default, $\mathcal{A}$ after one fold-up, and $\mathfrak{A}$ after two.
+\end{eg}
+\begin{eg}[Many readings]
+The seven Narnia books sit in one series container. The series has a canonical sequence (publication order), an endorsed alternative (chronological order), and forty fan sequences, some of which leave out \emph{The Last Battle}. Focused mode shows the series once, with publication order. What does broad mode show?
+\end{eg}
+\begin{eg}[Reprints]
+A short story first appears in a fest zine and is later reprinted in the author's own collection. Both containers are publishable. The story's canonical home is the zine. A search matching the story should show it once, while the collection stays reachable.
+\end{eg}
+
+\section{Not settled, and not for this session}
+Whether fandom membership should be expressed through tags or by membership in top-level fandom containers is open, and the answer would change how sub-problem~(5) is felt in practice. Designs that work either way are preferred.
+
+\end{document}
