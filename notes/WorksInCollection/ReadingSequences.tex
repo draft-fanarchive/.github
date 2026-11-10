@@ -21,68 +21,56 @@ Describes one proposed way of organizing written works
 \section{Assumptions and Scope}
 This document attempts to describe the principles organizing the structure and surfacing of works to hot-path feeds such as ``latest fics in [fandom],'' ``latest fics in [popular trope tag]'' and so on. It is assumed this is done in the context of a single AT Proto space the access to which is mediated by appviews.\footnote{See \url{https://github.com/bluesky-social/proposals/tree/main/0016-permissioned-data}. In particular, the most significant details for this project is: spaces do not exercise granular permissioning -- a read permission is a read permission to the entire space. Throughout this document we assume the \texttt{simplespace} set up where the app-view governs who may or may not read or write to the space, and call out the risks of this assumption in cases where the app taking the mediating role is the only way to deliver certain kinds of access.}  Our primary focus is on access control both from the space itself and from the medaiting app views. The aim of this sketch is to introduce a set of abstractions for handling the organization and curation of works, as well as a second set of definitions describing the minimal qualities necessary of any implemenation of those abstractions. Our secondary focus is on questions of work organization. Concerns that are not as proximately connected to questions of access or work groupings are largely outside the scope of this document, though access design naturally affects what is and is not possible to model. 
 
-% Terminology notes we should set in prose somewhere: records are just data on a repo somewhere. Containers are well-formed records which describe container sets, etc. etc. 
 \section{Definitions}
 \begin{defn}[Atom]Call a document uploaded by a user to a space repo an \emph{atom}. We will presume, without loss of generality, that we are dealing with sequences of narrative text, but a user could with equal ease upload an audio recording or piece of fanart.\footnote{Not included in this design, but a natural point of extension for later work: external references to entities not within the space could also be atomic records. Also included in this design -- at least at present -- is that a space repo has a single owner. The Bluesky team is developing a notion of a group account which, when complete, will slot naturally into the co-authorship case.} We will strive to use lower-case letters for atoms: one-shot $a$, chapter $b$, etc.\end{defn}
 \begin{defn}[Container set]A singleton set containing one atom is a \emph{container set}. We inductively extend the definition of container sets so that any set whose elements are all container sets is itself a container set.\end{defn}
-%Good note to self, probably not important enough for the final cut: \begin{rem}This means that containership of sets is not closed under pairwise union; most basically, $\{a\}\cup\{b\}$ is not a container set. It does make the empty set a container set.\end{rem}
 \begin{notn}It follows immediately from the definition that for every container set there is a minimal (w.r.t to the subset relation) set of atoms from which the container set can be made. For a given container set $A$ we will refer to this set as $\mathrm{atoms}(A)$.\end{notn}
 \begin{defn}We will often have occasion to measure how deeply nested a container set is. We define $\mathrm{depth}(X)$ to be $1$ by fiat for singleton atomic container sets, and $\mathrm{sup}\{\mathrm{depth}(A)+1 : A\in B\}$ for all others.\end{defn}
 \begin{defn}A space repo record describing a container set, extensionally or intesionally, is a \emph{container}.\end{defn}
-\begin{rem}%Nothing stops two containers from describing the same container set -- not even in the same space repo! A user may have a ``best of'' recommendation list of their own work with one item (a one-shot), and also a canonical publication site of that one-shot.
-Although sets have well-foundedness for free, app-views must enforce that containers describe well-founded sets.\end{rem}
+\begin{rem}Although sets have well-foundedness for free, app-views must enforce that containers describe well-founded sets.\end{rem}
 \begin{rem}Although this sketch allows both intensional and extensional definitions, only the ability to describe container sets extensionally is required of implemeneters. Implemeneters \emph{may} also allow intensional descriptions (e.g., to support ``here is a recommendation list driven by a query of the archive'') but there is no requirement that they do. Implementers may choose to impose additional constraints on what sets may be described intensionally.\footnote{Possible room for future development: standardize intensional definitions using stratified formulae from NF.}\end{rem}
-\begin{rem}%This is redundant and I think put here only because LLMs reading and reviewing kept needing an extra hint. An atom is not a container, and all interaction with work contents in atoms should be through their singleton container. 
-Implementors \emph{must} enforce uniqueness of singleton containers across the space: e.g., by ignoring references to atoms from containers apart from a singleton on the same space repo, by refusing to surface duplicate singletons in the app view, or by allowing singleton containers to be implicitly defined by the atom itself.\end{rem}
+\begin{rem}Implementors \emph{must} enforce uniqueness of singleton containers across the space: e.g., by ignoring references to atoms from containers apart from a singleton on the same space repo, by refusing to surface duplicate singletons in the app view, or by allowing singleton containers to be implicitly defined by the atom itself.\end{rem}
 \begin{rem}We will frequently and freely abuse notation and terminology, speaking of the atoms of a container and writing $\mathrm{atoms}(C)$ for some container $C$ when we ought to be speaking in terms of container sets. The reader must find a way to press on with their life somehow in the face of this.\end{rem}
-
-% We probably aren't doing this. \begin{defn}[Containment relations] Each container may also, in an optional field when describing its contents, name the kind of containment relation from a fixed but as-yet-undefined relational vocabulary (\emph{e.g.}, ``contains $A$ as a chapter'', ``anthologizes the short story $B$'', ``includes $C$ as supplementary material (glossary/index).'')\end{defn}
-% TODO: Revisit if we are doing this or not. This may be in tension with moving ``how to understand a work'' to its reading sequences. 
-% ALSO TODO: If you keep this, define the vocabulary here. 
-
 \begin{defn}[Endorsed \& canonical references]The space repo which hosts a container may also \emph{endorse} the inclusion of that container in other containers by publishing the endorsement as a separate record. For a given container at most one of its endorsed containments may be designated its \emph{canonical} containment, indicating the owner's view of the container's most proper home.\end{defn}
 \begin{rem}If one container on a space repo lists another container on the same space repo, it should \emph{likely} be read as an implicitly endorsed containment relation of their repsective described sets, but that conclusion is ultimatley up to the choice of app-view.\end{rem}
 \begin{rem}Spurrious endorsements -- records in space repos endorsing the inclusion of containers not hosted in those space repos, for example; or multiple canonical inclusions for the same container from one space repo -- must not be honored by an app-view.\end{rem}
 \begin{rem}Non-well-founded containment chains ($A$ lists $B$ as a child, $B$ lists $A$ as a child) must be resolved by app views ignoring whichever non-endorsed containment relation in the cycle was asserted last, if all containment relations are endorsed the last endorsed containment goes.\end{rem}
 
 We split the question of how to read a work from the work itself. That is, a work describes an assemblage of documents, with no particular sense of starting or stopping place. Questions of reading order we handle separately, in abstractions we call \emph{reading sequences}. 
+These shall require some bootstrapping.
 
-%[Good, but not the defn leader we want I think....] Every container already suggests two ways of reading it: read the container $X$'s children in the order the container lists them -- what we will call the \emph{natural order on} $X$. We could likewise be completely unopinionated: read each child of the container $X$ exactly once, in any order, the \emph{indifferent order on } $X$. These, of course, are the same on singleton containers. 
-We begin with the atomic singletons. We say a \emph{reading} of an atomic singleton container $A$ is a pair $\langle A, S\rangle$ where $S$ describes the sequence in which the container is read, and whose details we now flesh out. For the atomic singletons, $S$ may be a map from any non-zero ordinal into $A$. Alternatively stated, the \emph{reading sequences} of $A$ are a family of maps which repeatedly read its one document \emph{ad} varying degrees of \emph{nausesm}. We also declare, by fiat, the \emph{choice} reading of $A$, $\langle{}A, C_A\rangle{}$, which instructs the reader to read any one of $A$'s children, selected arbitrarily. Satisfied with our hocus pocus and conjuration of base cases, we proceed to induction.
-\begin{defn}We say a \emph{reading sequence} is a map from a non-zero ordinal to sets of other reading sequences.\end{defn}
-It is natural to want to be able to clarify in the more general case ``well, what does this reading sequence read?'' We provide the follwing answer. 
-\begin{defn}We define the support of a reading of a set, written $\mathrm{supp}(\langle X, S\rangle)$, to be: \begin{enumerate}
-\item $X$ itself if $X$ is an atomic singleton, and
+
+\begin{defn}We say a \emph{determinate reading sequence} is either: 
+  \begin{enumerate}
+    \item  a map from a non-zero, countable ordinal into an atomic singleton container set, or
+    \item  a map from a non-zero, countable ordinal into a set of other determinate reading sequences.
+  \end{enumerate}
+
+We also assert the existence of two ur-elements $c$ and $i$, which don't mean anything in particular. This funny business done, we introduce two operators which accept a determinate reading sequence and output what we stipulate to be another reading sequence.
+
+\begin{enumerate}\item{} The operator $\mathrm{Choice}(S)$ takes the determinate reading sequence $S$ and produces a new sequence given by $\{\lagnle c, \emptyset\rangle\}\cup S$ which the reader is meant to interpret as ``read exactly one element of the image of $S$''.
+\item{} The operator $\mathrm{Indifferent}(S)$ takes the determinate reading sequence $S$ and produces $\{\langle i, \emptyset\rangle\}\cup S$, which instructs the reader to read each element of the image of $S$ exactly once, in no particular order.\end{enumerate}
+Any reading sequence with $c$ or $i$ in its domain we call a \emph{volitional reading sequence} 
+This finally allows us to articulate the whole of our definition of reading sequences. A \emph{reading sequence} is
+  \begin{enumerate}
+    \item  a map from a non-zero, countable ordinal into a (possibly mixed) set of volitional or determinate reading sequences, or
+    \item  a map from a non-zero, countable ordinal into a set of other reading sequences.
+  \end{enumerate}
+\end{defn}
+
+
+It is natural to want to be able to clarify in the more general case ``well, what does this reading sequence read?'' and to ground our use of the phrase ``reading of a container set'' previously used in the bald assertion of base cases. We provide the follwing retroactive answer. 
+\begin{defn}We define the support of a reading of a set, written $\mathrm{supp}(S)$, to be: \begin{enumerate}
+\item $\mathrm{supp}(\emptyset)=\emptyset$
+\item the atom $a$, if $S$ is a map into an atomic singleton $\{a\}$,
 \item $\{ \mathrm{supp}(T) : T \in \bigcup\mathrm{Image}(S) \}$ otherwise. 
 \end{enumerate}\end{defn}
-\begin{defn}A reading sequence $S$ is a \emph{reading of} a container $X$ if $\mathrm{atoms}(\mathrm{supp}(S))\subseteq \mathrm{atoms}(X).$\end{defn}
+\begin{defn}A reading sequence $S$ is a \emph{reading of} a container $X$ if $\mathrm{supp}(S)\subseteq \mathrm{atoms}(X).$\end{defn}
 
-% Old definition, abandoned because admissibility made validity of records too susceptible to extraneous changes. 
-% E.g., <X,S> was a valid reading, referencing child <Y,R> but a new container was added to $Y$, not affecting the reading $R$ but breaking $Y$'s admissibility.
-%\begin{defn}We say that a container set $X$ is \emph{admisible} with respect to container $Y$ if $\mathrm{atoms}(X)\subset\mathrm{atoms}(Y)$, or if $\mathrm{atoms}(X)\subseteq\mathrm{atoms}(Y)$ and $\mathrm{depth}(X)<\mathrm{depth}(Y)$. We write $X\prec{Y}$ as a shorthand to express admissability.\end{defn}
-%\begin{defn}For containers that are not atomic singletons, a \emph{reading sequence} is a map from a non-zero ordinal to sets of readings of containers admissible to $X$.\end{defn}.
+There is one more reading it is useful to give a familiar name.
+\begin{defn}[Natural Reading]Let $\mathcal{A}$ be an extensionally defined container. A reading sequence from the finite ordinal with the same cardinality as the container set $A$ describes to the children of $A$, and which ranks those children in the same order from first to last as they are listed in the record defining $A$ is called a \emph{natural} reading of $A$. If the sequence reads each of $A$'s children under a natural reading of them, and those children's children under a natural reading and so forth we call it the natural reading sequence of $A$.\end{defn}
 
-%LEFTOVERS. Notes we are keeping for validation. 
-%a sequence $S$ is a reading of a container X if $atoms(Image(S)) \subseteq atoms(X)$. % NOTE this does not quite work because the image of $S$ is not a set of containers. it's a set of maps into (maps into... maps into ) containers. 
-%a reading of $X$ is a proper reading sequence of $X$ if the container $X$ itself does not appear in its image.  %Same problem.
-%Candidate substitute: a reading $S$ of $X$ is a proper reading sequence of $X$ if every $s\in{}\mathrm{Image}(S)$ has $atoms(s)\subsetneq atoms(X)$.  %Same problem.
-
-%Cases we do and do not want to allow
-%<{{X}},S> -> read {{X}} -- self referential, bad.
-%<{{X}},S> -> read a subset of {{{X}}, {b}} -- parent-referential, bad.
-%<{{X}}, S> -> read {X} under one of its readings -- Good!
-%Note that we want people to be able to mint containers made from parts of X to express alternate readings of $X$. For example, 
-%read chapter 1 of X, then read chapters 5, 2, and 3 in any order, then read the rest of X's chapters in numerical order requires an implicit container {5,2,3} that $X$ may not actually contain. This is why we're using sets rather than records. But it also comes with the headache that self-referential readings keep appearing. We want a set of local criteria that assemble to 'no self-reference.' 
-
-
-
-
-
-
-
-
-\begin{defn}[Natural and trivial readings]Let $\mathcal{A}$ be a container whose record enumerates its children as $A_1,\ldots,A_n$. The \emph{natural reading} of $\mathcal{A}$ reads $A_1$, then $A_2$, and so on through $A_n$. The \emph{trivial reading} of $\mathcal{A}$ reads every $A_i$ exactly once, in any order, each to completion before the next is begun.\end{defn}
-\begin{rem}Implementers who allow intensionally defined containers must also say in what order such a container enumerates its children.\end{rem}
+\begin{rem}Implementers who allow intensionally defined containers must define the order such a container enumerates its children, and the natural reading of the container from such an order.\end{rem}
 
 \begin{defn}The record describing a reading sequence we call a \emph{reading sequence record}. A reading sequence record may define a reading sequence extensionally or intensionally. As with containment, a space repo may endorse multiple sequences over one of its own containers, and designate at most one of them as canonical.\end{defn}
 \section{Ownership \& Permissions} Ownership of any given container or sequence record is fully decided by what space repo it lives in. The owner of the PDS hosting the space repo is the owner. 
