@@ -40,35 +40,23 @@ We split the question of how to read a work from the work itself. That is, a wor
 These shall require some bootstrapping.
 
 
-\begin{defn}We say a \emph{determinate reading sequence} is either: 
+We begin by asserting the existence of two distinct ur-elements $c$ and $i$, neither of them an atom, which don't mean anything in particular, and decree that $c<i<0$, which makes our ordinal $0$ look an awful lot like everyone else's ordinal $2$. Don't worry about it. This funny business done, we define reading sequences together with two operators on them.
+\begin{defn}[Reading sequence]A \emph{reading sequence} is
   \begin{enumerate}
-    \item  a map from a non-zero, countable ordinal into an atomic singleton container set, or
-    \item  a map from a non-zero, countable ordinal into a set of other determinate reading sequences.
+    \item  a map from a non-zero, countable ordinal into an atomic singleton container set,
+    \item  a map from a non-zero, countable ordinal into a set of other reading sequences, or
+    \item  one of the sequences $\mathrm{Choice}(S)=\{\langle c,\emptyset\rangle\}\cup S$ or $\mathrm{Indifferent}(S)=\{\langle i,\emptyset\rangle\}\cup S$, for a reading sequence $S$.
   \end{enumerate}
-
-We also assert the existence of two ur-elements $c$ and $i$, which don't mean anything in particular. This funny business done, we introduce two operators which accept a determinate reading sequence and output what we stipulate to be another reading sequence.
-
-\begin{enumerate}\item{} The operator $\mathrm{Choice}(S)$ takes the determinate reading sequence $S$ and produces a new sequence given by $\{\lagnle c, \emptyset\rangle\}\cup S$ which the reader is meant to interpret as ``read exactly one element of the image of $S$''.
-\item{} The operator $\mathrm{Indifferent}(S)$ takes the determinate reading sequence $S$ and produces $\{\langle i, \emptyset\rangle\}\cup S$, which instructs the reader to read each element of the image of $S$ exactly once, in no particular order.\end{enumerate}
-Any reading sequence with $c$ or $i$ in its domain we call a \emph{volitional reading sequence} 
-This finally allows us to articulate the whole of our definition of reading sequences. A \emph{reading sequence} is
-  \begin{enumerate}
-    \item  a map from a non-zero, countable ordinal into a (possibly mixed) set of volitional or determinate reading sequences, or
-    \item  a map from a non-zero, countable ordinal into a set of other reading sequences.
-  \end{enumerate}
+%TODO DROP MOST OF THIS PARAGRAPH AND ITS TYPOLOGIES, REVERT support to its Barwise version and make the comparison atoms(supp(S))subseteq atoms X
+The \emph{steps} of $S$ are its values at the ordinals in its domain, and whichever of $c$ and $i$ lie in its domain are its \emph{flags}. If $c$ is in the domain of $S$, read exactly one step of $S$; otherwise, if $i$ is, read every step exactly once, in any order; otherwise, read the steps in order. We call $S$ \emph{volitional} if it has a flag, and \emph{determinate} if neither $S$ nor, hereditarily, any of its steps has a flag.
 \end{defn}
 
-
-It is natural to want to be able to clarify in the more general case ``well, what does this reading sequence read?'' and to ground our use of the phrase ``reading of a container set'' previously used in the bald assertion of base cases. We provide the follwing retroactive answer. 
-\begin{defn}We define the support of a reading of a set, written $\mathrm{supp}(S)$, to be: \begin{enumerate}
-\item $\mathrm{supp}(\emptyset)=\emptyset$
-\item the atom $a$, if $S$ is a map into an atomic singleton $\{a\}$,
-\item $\{ \mathrm{supp}(T) : T \in \bigcup\mathrm{Image}(S) \}$ otherwise. 
-\end{enumerate}\end{defn}
+It is natural to want to be able to clarify ``well, what does this reading sequence read?'' We provide the following answer.
+\begin{defn}[Support]For an atom $a$ let $\mathrm{supp}(a)=\{a\}$, and for a reading sequence $S$ let its \emph{support} be $\mathrm{supp}(S)=\bigcup\{\mathrm{supp}(T) : T\text{ is a step of }S\}$.\end{defn}
 \begin{defn}A reading sequence $S$ is a \emph{reading of} a container $X$ if $\mathrm{supp}(S)\subseteq \mathrm{atoms}(X).$\end{defn}
 
 There is one more reading it is useful to give a familiar name.
-\begin{defn}[Natural Reading]Let $\mathcal{A}$ be an extensionally defined container. A reading sequence from the finite ordinal with the same cardinality as the container set $A$ describes to the children of $A$, and which ranks those children in the same order from first to last as they are listed in the record defining $A$ is called a \emph{natural} reading of $A$. If the sequence reads each of $A$'s children under a natural reading of them, and those children's children under a natural reading and so forth we call it the natural reading sequence of $A$.\end{defn}
+\begin{defn}[Natural Reading]Let $A$ be an extensionally defined container. A determinate reading sequence on the finite ordinal with the same cardinality as the container set $A$ describes, whose steps each read a different child of $A$ once, and read them in the same order that $A$ enumerates them is called a \emph{naturalized} reading of $A$. The naturalized reading whose image is itself composed of naturalized readings of $A$'s children, and those naturalized readings are themselves composed of naturalized readings of $A$'s grand-children and so on to the atomic singleton containers is called \emph{the natural reading of} $A$.\end{defn}
 
 \begin{rem}Implementers who allow intensionally defined containers must define the order such a container enumerates its children, and the natural reading of the container from such an order.\end{rem}
 
