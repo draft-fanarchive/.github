@@ -28,7 +28,7 @@ This document attempts to describe the principles organizing the structure and s
 \begin{defn}We will often have occasion to measure how deeply nested a container set is. We define $\mathrm{depth}(X)$ to be $1$ by fiat for singleton atomic container sets, and $\mathrm{sup}\{\mathrm{depth}(A)+1 : A\in B\}$ for all others.\end{defn}
 \begin{defn}A space repo record describing a container set, extensionally or intesionally, is a \emph{container}.\end{defn}
 \begin{rem}Although sets have well-foundedness for free, app-views must enforce that containers describe well-founded sets.\end{rem}
-\begin{rem}Although this sketch allows both intensional and extensional definitions, only the ability to describe container sets extensionally is required of implemeneters. Implemeneters \emph{may} also allow intensional descriptions (e.g., to support ``here is a recommendation list driven by a query of the archive'') but there is no requirement that they do. Implementers may choose to impose additional constraints on what sets may be described intensionally.\footnote{Possible room for future development: standardize intensional definitions using stratified formulae from NF.}\end{rem}
+\begin{rem}Although this sketch allows both intensional and extensional definitions, only the ability to describe container sets extensionally is required of implemeneters. Implemeneters \emph{may} also allow intensional descriptions (e.g., to support ``here is a recommendation list driven by a query of the archive'') but there is no requirement that they do. Implementers may choose to impose additional constraints on what sets may be described intensionally,\footnote{Possible room for future development: standardize intensional definitions using stratified formulae from NF.} where other set abstractions in this document describe non-finite objects, any implementation of intesionally defined sets must comply with the requirements implicitly set by those abstractions.\end{rem}
 \begin{rem}Implementors \emph{must} enforce uniqueness of singleton containers across the space: e.g., by ignoring references to atoms from containers apart from a singleton on the same space repo, by refusing to surface duplicate singletons in the app view, or by allowing singleton containers to be implicitly defined by the atom itself.\end{rem}
 \begin{rem}We will frequently and freely abuse notation and terminology, speaking of the atoms of a container and writing $\mathrm{atoms}(C)$ for some container $C$ when we ought to be speaking in terms of container sets. The reader must find a way to press on with their life somehow in the face of this.\end{rem}
 \begin{defn}[Endorsed \& canonical references]The space repo which hosts a container may also \emph{endorse} the inclusion of that container in other containers by publishing the endorsement as a separate record. For a given container at most one of its endorsed containments may be designated its \emph{canonical} containment, indicating the owner's view of the container's most proper home.\end{defn}
@@ -39,31 +39,38 @@ This document attempts to describe the principles organizing the structure and s
 We split the question of how to read a work from the work itself. That is, a work describes an assemblage of documents, with no particular sense of starting or stopping place. Questions of reading order we handle separately, in abstractions we call \emph{reading sequences}. 
 These shall require some bootstrapping.
 
-
-We begin by asserting the existence of two distinct ur-elements $c$ and $i$, neither of them an atom, which don't mean anything in particular, and decree that $c<i<0$, which makes our ordinal $0$ look an awful lot like everyone else's ordinal $2$. Don't worry about it. This funny business done, we define reading sequences together with two operators on them.
+We begin by asserting the existence of an ur-element $i$, which is not an atom, and which doesn't mean anything in particular of itself. We decree that $i<0$, which makes our ordinal $0$ look an awful lot like everyone else's ordinal $1$. Don't worry about it. This funny business done, we define reading sequences inductively.
 \begin{defn}[Reading sequence]A \emph{reading sequence} is
   \begin{enumerate}
-    \item  a map from a non-zero, countable ordinal into an atomic singleton container set,
-    \item  a map from a non-zero, countable ordinal into a set of other reading sequences, or
-    \item  one of the sequences $\mathrm{Choice}(S)=\{\langle c,\emptyset\rangle\}\cup S$ or $\mathrm{Indifferent}(S)=\{\langle i,\emptyset\rangle\}\cup S$, for a reading sequence $S$.
+    \item  a function whose domain is a non-zero, countable ordinal and whose values are all the same atomic singleton set $\{a\} $, repeated \emph{ad} varying degrees of \emph{nauseam} depending on the choice of ordinal, or    
+    \item  a function whose domain is a non-zero, countable ordinal and whose values are non-empty sets of other reading sequences, or
+    \item  another reading sequence extended with the pair $\langle i,\emptyset\rangle$ -- that is, if $S$ is a reading sequence, so is $S\cup\{\langle i,\emptyset\rangle\}$. 
   \end{enumerate}
-%TODO DROP MOST OF THIS PARAGRAPH AND ITS TYPOLOGIES, REVERT support to its Barwise version and make the comparison atoms(supp(S))subseteq atoms X
-The \emph{steps} of $S$ are its values at the ordinals in its domain, and whichever of $c$ and $i$ lie in its domain are its \emph{flags}. If $c$ is in the domain of $S$, read exactly one step of $S$; otherwise, if $i$ is, read every step exactly once, in any order; otherwise, read the steps in order. We call $S$ \emph{volitional} if it has a flag, and \emph{determinate} if neither $S$ nor, hereditarily, any of its steps has a flag.
 \end{defn}
+\begin{defn}If $i$ is \emph{not} in the domain of a reading sequence, we say it is an \emph{opinionated} reading sequence, otherwise it is \emph{indifferent}.\end{defn}
+\begin{defn}If every set in the image of a reading sequence has but one elemement, we say the reading sequence is \emph{determinate}, otherwise it is \emph{indeterminate}.\end{defn}%Side-benefit, no indifferent sequence is determinate (good! they shouldn't be!)
+
+\begin{rem}These adjectives gesture suggestively at the interpretation we give a reading sequence. An opinionated reading sequence instructs the reader to read the sequences (or atoms) in its image in the order prescribed by the ordinals in its domain. Where a set in its image contains more than one reading sequence, the reader is free to choose any one sequence of the group to read before continuing on. An indifferent reading instructs the reader to ignore the order prescribed by the ordinals in the domain of the sequence and simply read each entry in the image once, in any order.\end{rem}
 
 It is natural to want to be able to clarify ``well, what does this reading sequence read?'' We provide the following answer.
-\begin{defn}[Support]For an atom $a$ let $\mathrm{supp}(a)=\{a\}$, and for a reading sequence $S$ let its \emph{support} be $\mathrm{supp}(S)=\bigcup\{\mathrm{supp}(T) : T\text{ is a step of }S\}$.\end{defn}
-\begin{defn}A reading sequence $S$ is a \emph{reading of} a container $X$ if $\mathrm{supp}(S)\subseteq \mathrm{atoms}(X).$\end{defn}
+\begin{defn}[Base of a Reading Sequence]We describe a particular kind of container set implicitly defined by a reading sequence -- the sequence's \emph{base}, written $\mathrm{bs}(S)$ -- as follows. \begin{enumerate}
+\item $\mathrm{bs}(S)=\bigcup\mathrm{Image}(S),$ if $\bigcup\mathrm{Image}(S)$ contains atoms, and
+\item $\mathrm{bs}(S)=\{\mathrm{bs}(T) : T \in \bigcup\mathrm{Image}(S)\}$ otherwise.
+\end{enumerate}
+
+\end{defn}
+\begin{defn}A reading sequence $S$ is a \emph{reading of} a container $X$ if $\mathrm{atoms}(\mathrm{bs}(S))\subseteq \mathrm{atoms}(X).$\end{defn}
 
 There is one more reading it is useful to give a familiar name.
-\begin{defn}[Natural Reading]Let $A$ be an extensionally defined container. A determinate reading sequence on the finite ordinal with the same cardinality as the container set $A$ describes, whose steps each read a different child of $A$ once, and read them in the same order that $A$ enumerates them is called a \emph{naturalized} reading of $A$. The naturalized reading whose image is itself composed of naturalized readings of $A$'s children, and those naturalized readings are themselves composed of naturalized readings of $A$'s grand-children and so on to the atomic singleton containers is called \emph{the natural reading of} $A$.\end{defn}
+\begin{defn}[Natural Reading]Let $A$ be an extensionally defined container. A determinate reading sequence that visits each child of $A$ exactly once in the order the extensionally defined container lists them is called a \emph{naturalized} reading of $A$. You may prove to yourself that, when $A$ is an atomic singleton, the naturalized reading of $A$ is unique, and may speak of \emph{the natural} reading of $A$. We extend by induction the definition so that a naturalized reading of a container $C$, whose image is singleton sets each with the natural readings of a listed child of $C$, is the natural reading of $C$.\end{defn}
 
 \begin{rem}Implementers who allow intensionally defined containers must define the order such a container enumerates its children, and the natural reading of the container from such an order.\end{rem}
 
 \begin{defn}The record describing a reading sequence we call a \emph{reading sequence record}. A reading sequence record may define a reading sequence extensionally or intensionally. As with containment, a space repo may endorse multiple sequences over one of its own containers, and designate at most one of them as canonical.\end{defn}
-\section{Ownership \& Permissions} Ownership of any given container or sequence record is fully decided by what space repo it lives in. The owner of the PDS hosting the space repo is the owner. 
 
-A user may attach instructions to a container -- ``show this only to my friends, users 1, 2 and 3.'' -- and app-views must honor these requests, but unless the app-view is the only means of gaining read access to the space, there is no way to prevent others from reading the container directly, bypassing the app-view as an intermediary.
+\section{Ownership \& Permissions} Ownership of any given container or sequence record is fully decided by what space repo it lives in. That is, the owner of the space repo hosting a particular record is that record's owner. 
+
+A user may attach instructions to a container -- ``show this only to my friends, users 1, 2 and 3.'' -- and app-views must honor these requests, but unless the app-view is the only means of gaining read access to the space, there is no way to prevent others with access to the space from reading the container directly, bypassing the app-view as an intermediary.
 
 \section{Search and Presentation}
 Tags roll up across the inclusion relation for all container sets, even when the inclusion relation is not endorsed for the containers in question. Authors exercise control over which works appear in search results by marking works as publishable.
