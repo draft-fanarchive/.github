@@ -1,8 +1,9 @@
-# GRAO3
-GraphQL Archive of our Own (abbreviated _GRAO3_, preferred pronunciation "gray-oh-three") is a fan archive much like the [Archive of our Own](archiveofourown.org/), but using a different technology stack. _Please do not take this too seriously;_ I have no intention that this project becomes some sort of competitor to the Archive, nor any expectation that the Archive will borrow a single line of code I write here. I'm doing this to teach myself some new(-ish) technologies; in particular, I'm getting used to [Vite](https://vitejs.dev/) and [Ladle](https://ladle.dev/) for tooling, and taking a try at [Apollo Client](https://www.apollographql.com/docs/react).
+# DRAFT
+_Draft_ is a fanfic archive on the AT Protocol. Much like the [Archive of our Own](https://archiveofourown.org/), but using a different technology stack. _Please do not take this too seriously;_ I have no intention that this project becomes some sort of competitor to the Archive, nor any expectation that the Archive will borrow a single line of code I write here. I'm doing this to teach myself some new(-ish) technologies; in particular, I'm getting a sense of the AT Protocol and its proposed permissioned data model, and finally giving SvelteKit's remote functions a try.
 
-But even if the point of this project is purely educational, I still want to give GAO3 the best possible user experience. If you see a bug or have a suggestion, please feel free to open an issue in the appropriate repository. Currently, this project is spread across
+But even if the point of this project is purely educational, I still want to give Draft the best possible user experience, and try out a few ideas I think would make for a better reading and authoring experience. I think this has a really exciting take on work tags, and a look and feel that makes commenting on what you read easier.
 
-- **[grao3/.github](https://github.com/grao3/.github)**, used to maintain the github page, and to track issues that affect multiple other repositories. If you have a high-level feature request, this is the place to open it. 
-- **[grao3/schemata](https://github.com/grao3/schemata)**, Defines the types and queries in the archive's graphql API.
+If you see a bug or have a suggestion, please feel free to open an issue in the appropriate repository. Currently, this project is spread across
 
+- **[draft-fanarchive/.github](https://github.com/draft-fanarchive/.github)**, used to maintain the github page, and to track issues that affect multiple other repositories. If you have a high-level feature request, this is the place to open it.
+- **[draft-fanarchive/schemata](https://github.com/draft-fanarchive/schemata)**, defines AT Proto schemata for fanworks and feedback, as well as the types and queries in the archive's API.
